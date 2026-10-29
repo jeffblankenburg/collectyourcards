@@ -1,0 +1,1709 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["legacy"]
+}
+
+model achievement_categories {
+  category_id                                                   BigInt               @id @default(autoincrement())
+  name                                                          String               @db.VarChar(100)
+  description                                                   String?              @db.VarChar(500)
+  icon                                                          String?              @db.VarChar(255)
+  display_order                                                 Int?
+  is_active                                                     Boolean?
+  created_at                                                    DateTime             @db.Timestamptz(6)
+  updated_at                                                    DateTime?            @db.Timestamptz(6)
+  achievement_series                                            achievement_series[]
+  achievements_achievements_categoryToachievement_categories    achievements[]       @relation("achievements_categoryToachievement_categories")
+  achievements_achievements_category_idToachievement_categories achievements[]       @relation("achievements_category_idToachievement_categories")
+
+  @@schema("legacy")
+}
+
+model achievement_challenges {
+  challenge_id                                  BigInt       @id @default(autoincrement())
+  user_id                                       BigInt
+  achievement_id                                BigInt
+  challenge_type                                String?      @db.VarChar(50)
+  challenge_reason                              String?      @db.VarChar(500)
+  status                                        String?      @db.VarChar(50)
+  created_at                                    DateTime     @db.Timestamptz(6)
+  resolved_at                                   DateTime?    @db.Timestamptz(6)
+  resolved_by                                   BigInt?
+  resolution_notes                              String?      @db.VarChar(500)
+  achievements                                  achievements @relation(fields: [achievement_id], references: [achievement_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__achieveme__achie__2724C5F0")
+  user_achievement_challenges_resolved_byTouser user?        @relation("achievement_challenges_resolved_byTouser", fields: [resolved_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__achieveme__resol__2A01329B")
+  user_achievement_challenges_user_idTouser     user         @relation("achievement_challenges_user_idTouser", fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__achieveme__user___2630A1B7")
+
+  @@schema("legacy")
+}
+
+model achievement_dependencies {
+  dependency_id                                                               BigInt       @id @default(autoincrement())
+  achievement_id                                                              BigInt
+  required_achievement_id                                                     BigInt
+  achievements_achievement_dependencies_achievement_idToachievements          achievements @relation("achievement_dependencies_achievement_idToachievements", fields: [achievement_id], references: [achievement_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__achieveme__achie__2DD1C37F")
+  achievements_achievement_dependencies_required_achievement_idToachievements achievements @relation("achievement_dependencies_required_achievement_idToachievements", fields: [required_achievement_id], references: [achievement_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__achieveme__requi__2EC5E7B8")
+
+  @@schema("legacy")
+}
+
+model achievement_history {
+  history_id        BigInt       @id @default(autoincrement())
+  user_id           BigInt
+  achievement_id    BigInt
+  action            String?      @db.VarChar(50)
+  previous_progress Int?
+  new_progress      Int?
+  points_change     Int?
+  trigger_event     String?      @db.VarChar(100)
+  created_at        DateTime     @db.Timestamptz(6)
+  achievements      achievements @relation(fields: [achievement_id], references: [achievement_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__achieveme__achie__131DCD43")
+  user              user         @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__achieveme__user___1229A90A")
+
+  @@schema("legacy")
+}
+
+model achievement_notifications {
+  notification_id   BigInt        @id @default(autoincrement())
+  user_id           BigInt
+  achievement_id    BigInt?
+  notification_type String?       @db.VarChar(50)
+  title             String?       @db.VarChar(200)
+  message           String?       @db.VarChar(500)
+  icon_url          String?       @db.VarChar(500)
+  points_awarded    Int?
+  is_sent           Boolean?
+  is_read           Boolean?
+  created_at        DateTime      @db.Timestamptz(6)
+  sent_at           DateTime?     @db.Timestamptz(6)
+  read_at           DateTime?     @db.Timestamptz(6)
+  achievements      achievements? @relation(fields: [achievement_id], references: [achievement_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__achieveme__achie__2077C861")
+  user              user          @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__achieveme__user___1F83A428")
+
+  @@schema("legacy")
+}
+
+model achievement_series {
+  series_id                  BigInt                       @id @default(autoincrement())
+  series_name                String                       @db.VarChar(200)
+  description                String?                      @db.VarChar(500)
+  category_id                BigInt?
+  total_points               Int?
+  created_at                 DateTime                     @db.Timestamptz(6)
+  achievement_categories     achievement_categories?      @relation(fields: [category_id], references: [category_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__achieveme__categ__7775B2CE")
+  achievement_series_members achievement_series_members[]
+
+  @@schema("legacy")
+}
+
+model achievement_series_members {
+  member_id          BigInt             @id @default(autoincrement())
+  series_id          BigInt
+  achievement_id     BigInt
+  series_order       Int?
+  achievements       achievements       @relation(fields: [achievement_id], references: [achievement_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__achieveme__achie__7E22B05D")
+  achievement_series achievement_series @relation(fields: [series_id], references: [series_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__achieveme__serie__7D2E8C24")
+
+  @@schema("legacy")
+}
+
+model achievements {
+  achievement_id                                                                          BigInt                       @id @default(autoincrement())
+  category                                                                                BigInt?
+  subcategory                                                                             String?                      @db.VarChar(100)
+  name                                                                                    String                       @db.VarChar(200)
+  description                                                                             String                       @db.VarChar(500)
+  points                                                                                  Int
+  tier                                                                                    String?                      @db.VarChar(20)
+  icon_url                                                                                String?                      @db.VarChar(500)
+  requirement_type                                                                        String?                      @db.VarChar(50)
+  requirement_value                                                                       Int?
+  requirement_query                                                                       String?
+  completion_query                                                                        String?
+  is_active                                                                               Boolean?
+  is_secret                                                                               Boolean?
+  is_repeatable                                                                           Boolean?
+  cooldown_days                                                                           Int?
+  created_at                                                                              DateTime                     @db.Timestamptz(6)
+  updated_at                                                                              DateTime?                    @db.Timestamptz(6)
+  category_id                                                                             BigInt?
+  achievement_challenges                                                                  achievement_challenges[]
+  achievement_dependencies_achievement_dependencies_achievement_idToachievements          achievement_dependencies[]   @relation("achievement_dependencies_achievement_idToachievements")
+  achievement_dependencies_achievement_dependencies_required_achievement_idToachievements achievement_dependencies[]   @relation("achievement_dependencies_required_achievement_idToachievements")
+  achievement_history                                                                     achievement_history[]
+  achievement_notifications                                                               achievement_notifications[]
+  achievement_series_members                                                              achievement_series_members[]
+  achievement_categories_achievements_categoryToachievement_categories                    achievement_categories?      @relation("achievements_categoryToachievement_categories", fields: [category], references: [category_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__achieveme__categ__6462DE5A")
+  achievement_categories_achievements_category_idToachievement_categories                 achievement_categories?      @relation("achievements_category_idToachievement_categories", fields: [category_id], references: [category_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_achievements_category")
+  user_achievements                                                                       user_achievements[]
+
+  @@schema("legacy")
+}
+
+model admin_action_log {
+  log_id      BigInt   @id @default(autoincrement())
+  user_id     BigInt
+  action_type String   @db.VarChar(50)
+  entity_type String   @db.VarChar(50)
+  entity_id   String?  @db.VarChar(100)
+  old_values  String?
+  new_values  String?
+  ip_address  String?  @db.VarChar(45)
+  user_agent  String?  @db.VarChar(500)
+  created     DateTime @db.Timestamptz(6)
+  user        user     @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__admin_act__user___24B26D99")
+
+  @@schema("legacy")
+}
+
+model admin_set_view {
+  admin_set_view_id BigInt   @id @default(autoincrement())
+  user_id           BigInt
+  set_id            Int
+  last_viewed       DateTime @db.Timestamptz(6)
+  view_count        Int
+  set               set      @relation(fields: [set_id], references: [set_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_admin_set_view_set")
+  user              user     @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_admin_set_view_user")
+
+  @@schema("legacy")
+}
+
+model card {
+  card_id                                                 BigInt                  @id @default(autoincrement())
+  sort_order                                              Int?
+  card_number                                             String?
+  is_rookie                                               Boolean
+  is_autograph                                            Boolean
+  is_relic                                                Boolean
+  print_run                                               Int?
+  series                                                  BigInt?
+  color                                                   Int?
+  notes                                                   String?
+  created                                                 DateTime                @db.Timestamptz(6)
+  created_month                                           DateTime?               @db.Date
+  card_number_indexed                                     String?                 @db.VarChar(100)
+  reference_user_card                                     BigInt?
+  is_short_print                                          Boolean
+  front_image_path                                        String?
+  back_image_path                                         String?
+  color_card_colorTocolor                                 color?                  @relation("card_colorTocolor", fields: [color], references: [color_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_card_color")
+  user_card_card_reference_user_cardTouser_card           user_card?              @relation("card_reference_user_cardTouser_card", fields: [reference_user_card], references: [user_card_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_card_reference_user_card")
+  card_edit_submissions                                   card_edit_submissions[]
+  card_external_id                                        card_external_id[]
+  card_player_team_card_player_team_cardTocard            card_player_team[]      @relation("card_player_team_cardTocard")
+  card_price                                              card_price[]
+  card_submissions                                        card_submissions[]
+  card_variation_card_variation_cardTocard                card_variation[]        @relation("card_variation_cardTocard")
+  duplicate_detection_duplicate_detection_card_id_1Tocard duplicate_detection[]   @relation("duplicate_detection_card_id_1Tocard")
+  duplicate_detection_duplicate_detection_card_id_2Tocard duplicate_detection[]   @relation("duplicate_detection_card_id_2Tocard")
+  ebay_purchase                                           ebay_purchase[]
+  player                                                  player[]
+  sale                                                    sale[]
+  user_card_user_card_cardTocard                          user_card[]             @relation("user_card_cardTocard")
+
+  @@schema("legacy")
+}
+
+model card_edit_submissions {
+  submission_id                                BigInt    @id @default(autoincrement())
+  card_id                                      BigInt
+  user_id                                      BigInt
+  proposed_card_number                         String?
+  proposed_is_rookie                           Boolean?
+  proposed_is_autograph                        Boolean?
+  proposed_is_relic                            Boolean?
+  proposed_is_short_print                      Boolean?
+  proposed_print_run                           Int?
+  proposed_notes                               String?
+  submission_notes                             String?
+  status                                       String    @db.VarChar(20)
+  reviewed_by                                  BigInt?
+  reviewed_at                                  DateTime? @db.Timestamptz(6)
+  review_notes                                 String?
+  created_at                                   DateTime  @db.Timestamptz(6)
+  updated_at                                   DateTime? @db.Timestamptz(6)
+  previous_card_number                         String?
+  previous_is_rookie                           Boolean?
+  previous_is_autograph                        Boolean?
+  previous_is_relic                            Boolean?
+  previous_is_short_print                      Boolean?
+  previous_print_run                           Int?
+  previous_notes                               String?
+  batch_id                                     String?   @db.VarChar(100)
+  card                                         card      @relation(fields: [card_id], references: [card_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_card_edit_submissions_card")
+  user_card_edit_submissions_reviewed_byTouser user?     @relation("card_edit_submissions_reviewed_byTouser", fields: [reviewed_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_card_edit_submissions_reviewer")
+  user_card_edit_submissions_user_idTouser     user      @relation("card_edit_submissions_user_idTouser", fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_card_edit_submissions_user")
+
+  @@schema("legacy")
+}
+
+model card_external_id {
+  card_external_id_id BigInt       @id @default(autoincrement())
+  card_id             BigInt
+  price_source_id     Int
+  external_id         String       @db.VarChar(100)
+  external_name       String?      @db.VarChar(500)
+  match_method        String       @db.VarChar(20)
+  created_at          DateTime     @db.Timestamptz(6)
+  updated_at          DateTime?    @db.Timestamptz(6)
+  card                card         @relation(fields: [card_id], references: [card_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_card_external_id_card")
+  price_source        price_source @relation(fields: [price_source_id], references: [price_source_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_card_external_id_source")
+
+  @@schema("legacy")
+}
+
+model card_player_team {
+  card_player_team_id                                   BigInt       @id @default(autoincrement())
+  card                                                  BigInt?
+  player_team                                           BigInt?
+  created                                               DateTime     @db.Timestamptz(6)
+  card_card_player_team_cardTocard                      card?        @relation("card_player_team_cardTocard", fields: [card], references: [card_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_card_player_team_card")
+  player_team_card_player_team_player_teamToplayer_team player_team? @relation("card_player_team_player_teamToplayer_team", fields: [player_team], references: [player_team_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_card_player_team_player_team")
+
+  @@schema("legacy")
+}
+
+model card_price {
+  card_price_id   BigInt       @id @default(autoincrement())
+  card_id         BigInt
+  price_type_id   Int
+  price_source_id Int
+  price           Decimal?     @db.Decimal(10, 2)
+  last_updated    DateTime     @db.Timestamptz(6)
+  card            card         @relation(fields: [card_id], references: [card_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_card_price_card")
+  price_source    price_source @relation(fields: [price_source_id], references: [price_source_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_card_price_source")
+  price_type      price_type   @relation(fields: [price_type_id], references: [price_type_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_card_price_type")
+
+  @@schema("legacy")
+}
+
+model card_submissions {
+  submission_id                           BigInt              @id @default(autoincrement())
+  user_id                                 BigInt
+  series_id                               BigInt?
+  series_submission_id                    BigInt?
+  batch_id                                String?             @db.VarChar(50)
+  batch_sequence                          Int?
+  proposed_card_number                    String              @db.VarChar(50)
+  proposed_player_names                   String?             @db.VarChar(500)
+  proposed_team_names                     String?             @db.VarChar(500)
+  proposed_is_rookie                      Boolean
+  proposed_is_autograph                   Boolean
+  proposed_is_relic                       Boolean
+  proposed_is_short_print                 Boolean
+  proposed_print_run                      Int?
+  proposed_notes                          String?
+  matched_player_ids                      String?             @db.VarChar(200)
+  matched_team_ids                        String?             @db.VarChar(200)
+  submission_notes                        String?
+  status                                  String              @db.VarChar(20)
+  created_card_id                         BigInt?
+  reviewed_by                             BigInt?
+  reviewed_at                             DateTime?           @db.Timestamptz(6)
+  review_notes                            String?
+  created_at                              DateTime            @db.Timestamptz(6)
+  updated_at                              DateTime?           @db.Timestamptz(6)
+  proposed_color                          String?             @db.VarChar(100)
+  card                                    card?               @relation(fields: [created_card_id], references: [card_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_card_submissions_created_card")
+  user_card_submissions_reviewed_byTouser user?               @relation("card_submissions_reviewed_byTouser", fields: [reviewed_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_card_submissions_reviewer")
+  series                                  series?             @relation(fields: [series_id], references: [series_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_card_submissions_series")
+  series_submissions                      series_submissions? @relation(fields: [series_submission_id], references: [submission_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_card_submissions_series_submission")
+  user_card_submissions_user_idTouser     user                @relation("card_submissions_user_idTouser", fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_card_submissions_user")
+
+  @@schema("legacy")
+}
+
+model card_variation {
+  card_variation_id                                  BigInt      @id @default(autoincrement())
+  card                                               BigInt?
+  description                                        String?
+  created                                            DateTime?   @db.Timestamptz(6)
+  card_card_variation_cardTocard                     card?       @relation("card_variation_cardTocard", fields: [card], references: [card_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_card_variation_card")
+  user_card_user_card_card_variationTocard_variation user_card[] @relation("user_card_card_variationTocard_variation")
+
+  @@schema("legacy")
+}
+
+model collection_view {
+  collection_view_id              BigInt    @id @default(autoincrement())
+  user                            BigInt
+  name                            String    @db.VarChar(255)
+  slug                            String    @db.VarChar(255)
+  description                     String?
+  filter_config                   String
+  is_public                       Boolean?
+  view_count                      Int?
+  created_at                      DateTime? @db.Timestamptz(6)
+  updated_at                      DateTime? @db.Timestamptz(6)
+  user_collection_view_userTouser user      @relation("collection_view_userTouser", fields: [user], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_collection_view_user")
+
+  @@schema("legacy")
+}
+
+model color {
+  color_id                   Int      @id @default(autoincrement())
+  name                       String?
+  hex_value                  String?
+  created                    DateTime @db.Timestamptz(6)
+  name_indexed               String?  @db.VarChar(100)
+  card_card_colorTocolor     card[]   @relation("card_colorTocolor")
+  series_series_colorTocolor series[] @relation("series_colorTocolor")
+
+  @@schema("legacy")
+}
+
+model content_reports {
+  report_id                                   BigInt             @id @default(autoincrement())
+  reporter_user_id                            BigInt
+  comment_id                                  BigInt
+  report_reason                               String             @db.VarChar(50)
+  report_details                              String?            @db.VarChar(1000)
+  status                                      String             @db.VarChar(20)
+  reviewed_by                                 BigInt?
+  reviewed_at                                 DateTime?          @db.Timestamptz(6)
+  created_at                                  DateTime           @db.Timestamptz(6)
+  universal_comments                          universal_comments @relation(fields: [comment_id], references: [comment_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_content_reports_comment")
+  user_content_reports_reporter_user_idTouser user               @relation("content_reports_reporter_user_idTouser", fields: [reporter_user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_content_reports_reporter")
+  user_content_reports_reviewed_byTouser      user?              @relation("content_reports_reviewed_byTouser", fields: [reviewed_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_content_reports_reviewer")
+
+  @@schema("legacy")
+}
+
+model contributor_stats {
+  user_id                 BigInt    @id
+  total_submissions       Int
+  pending_submissions     Int
+  approved_submissions    Int
+  rejected_submissions    Int
+  approval_rate           Decimal?  @db.Decimal(5, 2)
+  trust_level             String    @db.VarChar(20)
+  trust_points            Int
+  first_submission_at     DateTime? @db.Timestamptz(6)
+  last_submission_at      DateTime? @db.Timestamptz(6)
+  current_streak_days     Int
+  longest_streak_days     Int
+  created_at              DateTime  @db.Timestamptz(6)
+  updated_at              DateTime? @db.Timestamptz(6)
+  set_submissions         Int
+  series_submissions      Int
+  card_submissions        Int
+  player_edit_submissions Int
+  team_edit_submissions   Int
+  user                    user      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_contributor_stats_user")
+
+  @@schema("legacy")
+}
+
+model duplicate_detection {
+  detection_id                             BigInt    @id @default(autoincrement())
+  card_id_1                                BigInt
+  card_id_2                                BigInt
+  similarity_score                         Decimal?  @db.Decimal(5, 4)
+  status                                   String?   @db.VarChar(50)
+  reviewed_by                              BigInt?
+  reviewed_at                              DateTime? @db.Timestamptz(6)
+  created_at                               DateTime? @db.Timestamptz(6)
+  card_duplicate_detection_card_id_1Tocard card      @relation("duplicate_detection_card_id_1Tocard", fields: [card_id_1], references: [card_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__duplicate__card___031C6FA4")
+  card_duplicate_detection_card_id_2Tocard card      @relation("duplicate_detection_card_id_2Tocard", fields: [card_id_2], references: [card_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__duplicate__card___041093DD")
+  user                                     user?     @relation(fields: [reviewed_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__duplicate__revie__0504B816")
+
+  @@schema("legacy")
+}
+
+model duplicate_detection_job {
+  job_id                BigInt    @id @default(autoincrement())
+  started_at            DateTime  @db.Timestamptz(6)
+  completed_at          DateTime? @db.Timestamptz(6)
+  status                String    @db.VarChar(50)
+  total_players_checked Int
+  groups_found          Int
+  error_message         String?
+
+  @@schema("legacy")
+}
+
+model duplicate_exclusion {
+  player1_id                                    BigInt
+  player2_id                                    BigInt
+  created                                       DateTime? @db.Timestamptz(6)
+  created_by                                    BigInt?
+  player_duplicate_exclusion_player1_idToplayer player    @relation("duplicate_exclusion_player1_idToplayer", fields: [player1_id], references: [player_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_duplicate_exclusion_player1")
+  player_duplicate_exclusion_player2_idToplayer player    @relation("duplicate_exclusion_player2_idToplayer", fields: [player2_id], references: [player_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_duplicate_exclusion_player2")
+  user                                          user?     @relation(fields: [created_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_duplicate_exclusion_user")
+
+  @@id([player1_id, player2_id])
+  @@schema("legacy")
+}
+
+model duplicate_player_group {
+  group_id                BigInt                    @id @default(autoincrement())
+  similarity_score        Float
+  total_cards             Int
+  status                  String                    @db.VarChar(50)
+  created                 DateTime                  @db.Timestamptz(6)
+  last_updated            DateTime                  @db.Timestamptz(6)
+  resolved_by_user_id     BigInt?
+  resolved_at             DateTime?                 @db.Timestamptz(6)
+  user                    user?                     @relation(fields: [resolved_by_user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_duplicate_player_group_user")
+  duplicate_player_member duplicate_player_member[]
+
+  @@schema("legacy")
+}
+
+model duplicate_player_member {
+  member_id              BigInt                 @id @default(autoincrement())
+  group_id               BigInt
+  player_id              BigInt
+  is_primary             Boolean
+  created                DateTime               @db.Timestamptz(6)
+  duplicate_player_group duplicate_player_group @relation(fields: [group_id], references: [group_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_duplicate_player_member_group")
+  player                 player                 @relation(fields: [player_id], references: [player_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_duplicate_player_member_player")
+
+  @@schema("legacy")
+}
+
+model ebay_deletion_log {
+  log_id        BigInt    @id @default(autoincrement())
+  username      String    @db.VarChar(255)
+  user_id       String    @db.VarChar(255)
+  eias_token    String?
+  deletion_date DateTime? @db.Timestamptz(6)
+  processed     Boolean?
+  created_at    DateTime? @db.Timestamptz(6)
+
+  @@schema("legacy")
+}
+
+model ebay_purchase {
+  purchase_id     BigInt    @id @default(autoincrement())
+  user_id         BigInt
+  ebay_item_id    String?   @db.VarChar(255)
+  title           String?   @db.VarChar(500)
+  purchase_date   DateTime? @db.Timestamptz(6)
+  price           Decimal?  @db.Decimal(10, 2)
+  quantity        Int?
+  seller          String?   @db.VarChar(255)
+  matched_card_id BigInt?
+  created_at      DateTime? @db.Timestamptz(6)
+  card            card?     @relation(fields: [matched_card_id], references: [card_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__ebay_purc__match__0F824689")
+  user            user      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__ebay_purc__user___0E8E2250")
+
+  @@schema("legacy")
+}
+
+model ebay_sync_log {
+  log_id          BigInt    @id @default(autoincrement())
+  user_id         BigInt
+  sync_type       String?   @db.VarChar(50)
+  status          String?   @db.VarChar(50)
+  items_processed Int?
+  items_matched   Int?
+  error_message   String?
+  started_at      DateTime? @db.Timestamptz(6)
+  completed_at    DateTime? @db.Timestamptz(6)
+  user            user      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__ebay_sync__user___125EB334")
+
+  @@schema("legacy")
+}
+
+model feedback_response {
+  response_id         BigInt              @id @default(autoincrement())
+  feedback_id         BigInt
+  responder_id        BigInt
+  message             String
+  is_internal         Boolean
+  created_at          DateTime            @db.Timestamptz(6)
+  feedback_submission feedback_submission @relation(fields: [feedback_id], references: [feedback_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_feedback_response_feedback")
+  user                user                @relation(fields: [responder_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_feedback_response_responder")
+
+  @@schema("legacy")
+}
+
+model feedback_submission {
+  feedback_id                                BigInt              @id @default(autoincrement())
+  reference_number                           String              @db.VarChar(20)
+  submission_type                            String              @db.VarChar(20)
+  subject                                    String              @db.VarChar(255)
+  description                                String
+  email                                      String              @db.VarChar(255)
+  user_id                                    BigInt?
+  page_url                                   String              @db.VarChar(500)
+  user_agent                                 String?             @db.VarChar(500)
+  screen_resolution                          String?             @db.VarChar(50)
+  console_logs                               String?
+  screenshot_url                             String?             @db.VarChar(500)
+  priority                                   String?             @db.VarChar(20)
+  steps_to_reproduce                         String?
+  status                                     String              @db.VarChar(20)
+  admin_notes                                String?
+  github_issue_number                        Int?
+  github_issue_url                           String?             @db.VarChar(500)
+  resolved_at                                DateTime?           @db.Timestamptz(6)
+  resolved_by                                BigInt?
+  created_at                                 DateTime            @db.Timestamptz(6)
+  updated_at                                 DateTime            @db.Timestamptz(6)
+  feedback_response                          feedback_response[]
+  user_feedback_submission_resolved_byTouser user?               @relation("feedback_submission_resolved_byTouser", fields: [resolved_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_feedback_submission_resolver")
+  user_feedback_submission_user_idTouser     user?               @relation("feedback_submission_user_idTouser", fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_feedback_submission_user")
+
+  @@schema("legacy")
+}
+
+model grading_agency {
+  grading_agency_id Int       @id @default(autoincrement())
+  name              String?
+  abbreviation      String?
+  created           DateTime? @db.Timestamptz(6)
+  sort_order        Int?
+
+  @@schema("legacy")
+}
+
+model import_job {
+  job_id            BigInt    @id @default(autoincrement())
+  user_id           BigInt
+  status            String?   @db.VarChar(50)
+  file_path         String?   @db.VarChar(1000)
+  total_records     Int?
+  processed_records Int?
+  error_message     String?
+  created_at        DateTime? @db.Timestamptz(6)
+  completed_at      DateTime? @db.Timestamptz(6)
+  user              user      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__import_jo__user___7E57BA87")
+
+  @@schema("legacy")
+}
+
+model import_mapping {
+  mapping_id   BigInt    @id @default(autoincrement())
+  user_id      BigInt
+  file_name    String?   @db.VarChar(500)
+  mapping_data String?
+  created_at   DateTime? @db.Timestamptz(6)
+  user         user      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__import_ma__user___7993056A")
+
+  @@schema("legacy")
+}
+
+model import_recovery_point {
+  recovery_id       BigInt    @id @default(autoincrement())
+  user_id           BigInt
+  import_session_id String?   @db.VarChar(255)
+  stage             String?   @db.VarChar(50)
+  data              String?
+  created_at        DateTime? @db.Timestamptz(6)
+  user              user      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__import_re__user___162F4418")
+
+  @@schema("legacy")
+}
+
+model location {
+  location_id BigInt    @id @default(autoincrement())
+  name        String    @db.VarChar(255)
+  description String?
+  created_at  DateTime? @db.Timestamptz(6)
+
+  @@schema("legacy")
+}
+
+model manufacturer {
+  manufacturer_id                    Int       @id @default(autoincrement())
+  name                               String?
+  created                            DateTime? @db.Timestamptz(6)
+  name_indexed                       String?   @db.VarChar(255)
+  set_set_manufacturerTomanufacturer set[]     @relation("set_manufacturerTomanufacturer")
+
+  @@schema("legacy")
+}
+
+model moderation_actions {
+  action_id         BigInt   @id @default(autoincrement())
+  moderator_user_id BigInt
+  action_type       String   @db.VarChar(50)
+  target_type       String   @db.VarChar(20)
+  target_id         BigInt
+  reason            String?  @db.VarChar(500)
+  details           String?
+  created_at        DateTime @db.Timestamptz(6)
+  user              user     @relation(fields: [moderator_user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_moderation_actions_moderator")
+
+  @@schema("legacy")
+}
+
+model order_supply_usage {
+  order_supply_usage_id BigInt       @id @default(autoincrement())
+  order_id              BigInt
+  supply_batch_id       BigInt
+  quantity_used         Int
+  cost_per_unit         Decimal      @db.Decimal(10, 6)
+  total_cost            Decimal      @db.Decimal(10, 2)
+  created               DateTime     @db.Timestamptz(6)
+  supply_batch          supply_batch @relation(fields: [supply_batch_id], references: [supply_batch_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_order_supply_usage_batch")
+  sale_order            sale_order   @relation(fields: [order_id], references: [order_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_order_supply_usage_order")
+
+  @@schema("legacy")
+}
+
+model organization {
+  organization_id                      Int      @id @default(autoincrement())
+  name                                 String?
+  abbreviation                         String?
+  created                              DateTime @db.Timestamptz(6)
+  sport                                String?  @db.VarChar(255)
+  set_set_organizationToorganization   set[]    @relation("set_organizationToorganization")
+  team_team_organizationToorganization team[]   @relation("team_organizationToorganization")
+
+  @@schema("legacy")
+}
+
+model player {
+  player_id                                                  BigInt                    @id @default(autoincrement())
+  first_name                                                 String?
+  last_name                                                  String?
+  nick_name                                                  String?
+  birthdate                                                  DateTime?                 @db.Timestamptz(6)
+  created                                                    DateTime?                 @db.Timestamptz(6)
+  is_hof                                                     Boolean?
+  card_count                                                 Int?
+  normalized_name                                            String?
+  first_name_indexed                                         String?                   @db.VarChar(255)
+  last_name_indexed                                          String?                   @db.VarChar(255)
+  nick_name_indexed                                          String?                   @db.VarChar(255)
+  slug                                                       String                    @db.VarChar(255)
+  display_card                                               BigInt?
+  last_name_soundex                                          String?                   @db.VarChar(5)
+  first_name_soundex                                         String?                   @db.VarChar(5)
+  duplicate_exclusion_duplicate_exclusion_player1_idToplayer duplicate_exclusion[]     @relation("duplicate_exclusion_player1_idToplayer")
+  duplicate_exclusion_duplicate_exclusion_player2_idToplayer duplicate_exclusion[]     @relation("duplicate_exclusion_player2_idToplayer")
+  duplicate_player_member                                    duplicate_player_member[]
+  card                                                       card?                     @relation(fields: [display_card], references: [card_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_player_display_card")
+  player_edit_submissions                                    player_edit_submissions[]
+  player_team_player_team_playerToplayer                     player_team[]             @relation("player_team_playerToplayer")
+  user_player_user_player_playerToplayer                     user_player[]             @relation("user_player_playerToplayer")
+
+  @@schema("legacy")
+}
+
+model player_edit_submissions {
+  submission_id                                  BigInt    @id @default(autoincrement())
+  player_id                                      BigInt
+  user_id                                        BigInt
+  previous_first_name                            String?
+  previous_last_name                             String?
+  previous_nick_name                             String?
+  previous_birthdate                             DateTime? @db.Timestamptz(6)
+  previous_is_hof                                Boolean?
+  proposed_first_name                            String?
+  proposed_last_name                             String?
+  proposed_nick_name                             String?
+  proposed_birthdate                             DateTime? @db.Timestamptz(6)
+  proposed_is_hof                                Boolean?
+  submission_notes                               String?
+  status                                         String    @db.VarChar(20)
+  batch_id                                       String?   @db.VarChar(100)
+  reviewed_by                                    BigInt?
+  reviewed_at                                    DateTime? @db.Timestamptz(6)
+  review_notes                                   String?
+  created_at                                     DateTime  @db.Timestamptz(6)
+  updated_at                                     DateTime? @db.Timestamptz(6)
+  player                                         player    @relation(fields: [player_id], references: [player_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_player_edit_submissions_player")
+  user_player_edit_submissions_reviewed_byTouser user?     @relation("player_edit_submissions_reviewed_byTouser", fields: [reviewed_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_player_edit_submissions_reviewer")
+  user_player_edit_submissions_user_idTouser     user      @relation("player_edit_submissions_user_idTouser", fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_player_edit_submissions_user")
+
+  @@schema("legacy")
+}
+
+model player_team {
+  player_team_id                                             BigInt             @id @default(autoincrement())
+  player                                                     BigInt?
+  team                                                       Int?
+  created                                                    DateTime           @db.Timestamptz(6)
+  card_count                                                 Int
+  card_player_team_card_player_team_player_teamToplayer_team card_player_team[] @relation("card_player_team_player_teamToplayer_team")
+  player_player_team_playerToplayer                          player?            @relation("player_team_playerToplayer", fields: [player], references: [player_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_player_team_player")
+  team_player_team_teamToteam                                team?              @relation("player_team_teamToteam", fields: [team], references: [team_Id], onDelete: NoAction, onUpdate: NoAction, map: "FK_player_team_team")
+
+  @@schema("legacy")
+}
+
+model price_source {
+  price_source_id  Int                @id @default(autoincrement())
+  code             String             @db.VarChar(50)
+  name             String             @db.VarChar(100)
+  api_base_url     String?            @db.VarChar(500)
+  is_active        Boolean
+  created_at       DateTime           @db.Timestamptz(6)
+  card_external_id card_external_id[]
+  card_price       card_price[]
+
+  @@schema("legacy")
+}
+
+model price_type {
+  price_type_id   Int          @id @default(autoincrement())
+  code            String       @db.VarChar(50)
+  name            String       @db.VarChar(100)
+  grading_company String?      @db.VarChar(50)
+  grade           Decimal?     @db.Decimal(3, 1)
+  sort_order      Int
+  is_active       Boolean
+  card_price      card_price[]
+
+  @@schema("legacy")
+}
+
+model product_purchase {
+  product_purchase_id BigInt   @id @default(autoincrement())
+  user_id             BigInt
+  set_id              Int
+  product_type        String   @db.VarChar(50)
+  product_name        String?  @db.VarChar(255)
+  purchase_date       DateTime @db.Timestamptz(6)
+  quantity            Int
+  total_cost          Decimal  @db.Decimal(10, 2)
+  cost_per_unit       Decimal  @db.Decimal(10, 2)
+  estimated_cards     Int?
+  source              String?  @db.VarChar(255)
+  notes               String?
+  created             DateTime @db.Timestamptz(6)
+  updated             DateTime @db.Timestamptz(6)
+  set                 set      @relation(fields: [set_id], references: [set_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_product_purchase_set")
+  user                user     @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_product_purchase_user")
+
+  @@schema("legacy")
+}
+
+model product_type {
+  product_type_id Int      @id @default(autoincrement())
+  user_id         BigInt?
+  name            String   @db.VarChar(100)
+  slug            String   @db.VarChar(50)
+  description     String?  @db.VarChar(255)
+  is_active       Boolean
+  display_order   Int
+  created         DateTime @db.Timestamptz(6)
+  user            user?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_product_type_user")
+
+  @@schema("legacy")
+}
+
+model sale {
+  sale_id            BigInt              @id @default(autoincrement())
+  user_id            BigInt
+  card_id            BigInt?
+  user_card_id       BigInt?
+  platform_id        Int?
+  order_id           BigInt?
+  shipping_config_id Int?
+  status             String?             @db.VarChar(20)
+  sale_date          DateTime?           @db.Timestamptz(6)
+  purchase_price     Decimal?            @db.Decimal(10, 2)
+  sale_price         Decimal?            @db.Decimal(10, 2)
+  shipping_charged   Decimal?            @db.Decimal(10, 2)
+  shipping_cost      Decimal?            @db.Decimal(10, 2)
+  platform_fees      Decimal?            @db.Decimal(10, 2)
+  other_fees         Decimal?            @db.Decimal(10, 2)
+  supply_cost        Decimal?            @db.Decimal(10, 2)
+  adjustment         Decimal?            @db.Decimal(10, 2)
+  total_revenue      Decimal?            @db.Decimal(10, 2)
+  total_costs        Decimal?            @db.Decimal(10, 2)
+  net_profit         Decimal?            @db.Decimal(10, 2)
+  buyer_username     String?             @db.VarChar(100)
+  tracking_number    String?             @db.VarChar(100)
+  notes              String?
+  created            DateTime?           @db.Timestamptz(6)
+  updated            DateTime?           @db.Timestamptz(6)
+  series_id          BigInt?
+  bulk_description   String?             @db.VarChar(255)
+  buyer_zip_code     String?             @db.VarChar(20)
+  bulk_card_count    Int?
+  card               card?               @relation(fields: [card_id], references: [card_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_sale_card")
+  sale_order         sale_order?         @relation(fields: [order_id], references: [order_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_sale_order")
+  selling_platform   selling_platform?   @relation(fields: [platform_id], references: [platform_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_sale_platform")
+  series             series?             @relation(fields: [series_id], references: [series_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_sale_series")
+  shipping_config    shipping_config?    @relation(fields: [shipping_config_id], references: [shipping_config_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_sale_shipping_config")
+  user               user                @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_sale_user")
+  sale_supply_usage  sale_supply_usage[]
+
+  @@schema("legacy")
+}
+
+model sale_order {
+  order_id           BigInt               @id @default(autoincrement())
+  user_id            BigInt
+  platform_id        Int?
+  order_reference    String?              @db.VarChar(100)
+  buyer_username     String?              @db.VarChar(100)
+  status             String?              @db.VarChar(20)
+  ship_date          DateTime?            @db.Timestamptz(6)
+  shipping_charged   Decimal?             @db.Decimal(10, 2)
+  shipping_cost      Decimal?             @db.Decimal(10, 2)
+  tracking_number    String?              @db.VarChar(100)
+  notes              String?
+  created            DateTime?            @db.Timestamptz(6)
+  updated            DateTime?            @db.Timestamptz(6)
+  shipping_config_id Int?
+  order_supply_usage order_supply_usage[]
+  sale               sale[]
+  selling_platform   selling_platform?    @relation(fields: [platform_id], references: [platform_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_sale_order_platform")
+  shipping_config    shipping_config?     @relation(fields: [shipping_config_id], references: [shipping_config_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_sale_order_shipping_config")
+  user               user                 @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_sale_order_user")
+
+  @@schema("legacy")
+}
+
+model sale_status {
+  sale_status_id Int      @id @default(autoincrement())
+  name           String   @db.VarChar(50)
+  slug           String   @db.VarChar(50)
+  description    String?  @db.VarChar(255)
+  color          String?  @db.VarChar(20)
+  is_active      Boolean
+  display_order  Int
+  created        DateTime @db.Timestamptz(6)
+
+  @@schema("legacy")
+}
+
+model sale_supply_usage {
+  sale_supply_usage_id BigInt       @id @default(autoincrement())
+  sale_id              BigInt
+  supply_batch_id      BigInt
+  quantity_used        Int
+  cost_per_unit        Decimal      @db.Decimal(10, 6)
+  total_cost           Decimal      @db.Decimal(10, 2)
+  created              DateTime?    @db.Timestamptz(6)
+  supply_batch         supply_batch @relation(fields: [supply_batch_id], references: [supply_batch_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_sale_supply_usage_batch")
+  sale                 sale         @relation(fields: [sale_id], references: [sale_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_sale_supply_usage_sale")
+
+  @@schema("legacy")
+}
+
+model selling_platform {
+  platform_id            Int          @id @default(autoincrement())
+  user_id                BigInt?
+  name                   String       @db.VarChar(100)
+  is_default             Boolean?
+  is_active              Boolean?
+  fee_percentage         Decimal?     @db.Decimal(5, 2)
+  payment_fee_percentage Decimal?     @db.Decimal(5, 2)
+  fixed_fee              Decimal?     @db.Decimal(10, 2)
+  notes                  String?
+  created                DateTime?    @db.Timestamptz(6)
+  updated                DateTime?    @db.Timestamptz(6)
+  payment_fee_pct        Decimal?     @db.Decimal(5, 2)
+  sale                   sale[]
+  sale_order             sale_order[]
+
+  @@schema("legacy")
+}
+
+model series {
+  series_id                                                        BigInt                   @id @default(autoincrement())
+  name                                                             String?
+  set                                                              Int?
+  card_count                                                       Int
+  photo_url                                                        String?
+  created                                                          DateTime                 @db.Timestamptz(6)
+  card_entered_count                                               Int?
+  is_base                                                          Boolean?
+  parallel_of_series                                               BigInt?
+  front_image_path                                                 String?
+  back_image_path                                                  String?
+  print_run_variations                                             Int?
+  print_run                                                        Int?
+  color                                                            Int?
+  min_print_run                                                    Int?
+  max_print_run                                                    Int?
+  print_run_display                                                String?                  @db.VarChar(50)
+  rookie_count                                                     Int?
+  production_code                                                  String?                  @db.VarChar(50)
+  name_indexed                                                     String?                  @db.VarChar(450)
+  slug                                                             String                   @db.VarChar(255)
+  card_submissions                                                 card_submissions[]
+  sale                                                             sale[]
+  color_series_colorTocolor                                        color?                   @relation("series_colorTocolor", fields: [color], references: [color_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_series_color")
+  set_series_setToset                                              set?                     @relation("series_setToset", fields: [set], references: [set_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_series_set")
+  series_submissions_series_submissions_created_series_idToseries  series_submissions[]     @relation("series_submissions_created_series_idToseries")
+  series_submissions_series_submissions_existing_series_idToseries series_submissions[]     @relation("series_submissions_existing_series_idToseries")
+  user_series_user_series_seriesToseries                           user_series[]            @relation("user_series_seriesToseries")
+  user_series_completion                                           user_series_completion[]
+
+  @@schema("legacy")
+}
+
+model series_submissions {
+  submission_id                                        BigInt             @id @default(autoincrement())
+  user_id                                              BigInt
+  set_id                                               Int?
+  set_submission_id                                    BigInt?
+  proposed_name                                        String             @db.VarChar(255)
+  proposed_description                                 String?
+  proposed_base_card_count                             Int?
+  proposed_is_parallel                                 Boolean
+  proposed_parallel_name                               String?            @db.VarChar(100)
+  proposed_print_run                                   Int?
+  submission_notes                                     String?
+  status                                               String             @db.VarChar(20)
+  created_series_id                                    BigInt?
+  reviewed_by                                          BigInt?
+  reviewed_at                                          DateTime?          @db.Timestamptz(6)
+  review_notes                                         String?
+  created_at                                           DateTime           @db.Timestamptz(6)
+  updated_at                                           DateTime?          @db.Timestamptz(6)
+  proposed_parallel_of_series                          BigInt?
+  existing_series_id                                   BigInt?
+  previous_name                                        String?            @db.VarChar(255)
+  previous_description                                 String?
+  previous_base_card_count                             Int?
+  previous_is_parallel                                 Boolean?
+  previous_parallel_name                               String?            @db.VarChar(100)
+  previous_print_run                                   Int?
+  previous_parallel_of_series                          BigInt?
+  batch_id                                             String?            @db.VarChar(100)
+  card_submissions                                     card_submissions[]
+  series_series_submissions_created_series_idToseries  series?            @relation("series_submissions_created_series_idToseries", fields: [created_series_id], references: [series_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_series_submissions_created_series")
+  series_series_submissions_existing_series_idToseries series?            @relation("series_submissions_existing_series_idToseries", fields: [existing_series_id], references: [series_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_series_submissions_existing_series")
+  user_series_submissions_reviewed_byTouser            user?              @relation("series_submissions_reviewed_byTouser", fields: [reviewed_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_series_submissions_reviewer")
+  set                                                  set?               @relation(fields: [set_id], references: [set_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_series_submissions_set")
+  set_submissions                                      set_submissions?   @relation(fields: [set_submission_id], references: [submission_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_series_submissions_set_submission")
+  user_series_submissions_user_idTouser                user               @relation("series_submissions_user_idTouser", fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_series_submissions_user")
+
+  @@schema("legacy")
+}
+
+model set {
+  set_id                                              Int                            @id @default(autoincrement())
+  name                                                String?
+  year                                                Int?
+  organization                                        Int?
+  manufacturer                                        Int?
+  created                                             DateTime                       @db.Timestamptz(6)
+  card_count                                          Int?
+  series_count                                        Int?
+  is_complete                                         Boolean?
+  thumbnail                                           String?
+  checklist_blob_url                                  String?
+  checklist_generated_at                              DateTime?                      @db.Timestamptz(6)
+  checklist_generation_status                         String?                        @db.VarChar(50)
+  checklist_file_size                                 Int?
+  checklist_format                                    String?                        @db.VarChar(20)
+  name_indexed                                        String?                        @db.VarChar(450)
+  slug                                                String                         @db.VarChar(255)
+  admin_set_view                                      admin_set_view[]
+  product_purchase                                    product_purchase[]
+  series_series_setToset                              series[]                       @relation("series_setToset")
+  series_submissions                                  series_submissions[]
+  manufacturer_set_manufacturerTomanufacturer         manufacturer?                  @relation("set_manufacturerTomanufacturer", fields: [manufacturer], references: [manufacturer_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_set_manufacturer")
+  organization_set_organizationToorganization         organization?                  @relation("set_organizationToorganization", fields: [organization], references: [organization_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_set_organization")
+  set_submissions_set_submissions_created_set_idToset set_submissions[]              @relation("set_submissions_created_set_idToset")
+  set_submissions_set_submissions_set_idToset         set_submissions[]              @relation("set_submissions_set_idToset")
+  spreadsheet_generation_log                          spreadsheet_generation_log[]
+  spreadsheet_generation_queue                        spreadsheet_generation_queue[]
+
+  @@schema("legacy")
+}
+
+model set_submissions {
+  submission_id                           BigInt               @id @default(autoincrement())
+  user_id                                 BigInt
+  proposed_name                           String               @db.VarChar(255)
+  proposed_year                           Int
+  proposed_sport                          String               @db.VarChar(50)
+  proposed_manufacturer                   String?              @db.VarChar(100)
+  proposed_description                    String?
+  submission_notes                        String?
+  status                                  String               @db.VarChar(20)
+  created_set_id                          Int?
+  reviewed_by                             BigInt?
+  reviewed_at                             DateTime?            @db.Timestamptz(6)
+  review_notes                            String?
+  created_at                              DateTime             @db.Timestamptz(6)
+  updated_at                              DateTime?            @db.Timestamptz(6)
+  set_id                                  Int?
+  previous_name                           String?              @db.VarChar(255)
+  previous_year                           Int?
+  previous_sport                          String?              @db.VarChar(50)
+  previous_manufacturer                   String?              @db.VarChar(100)
+  previous_description                    String?
+  batch_id                                String?              @db.VarChar(100)
+  series_submissions                      series_submissions[]
+  set_set_submissions_created_set_idToset set?                 @relation("set_submissions_created_set_idToset", fields: [created_set_id], references: [set_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_set_submissions_created_set")
+  user_set_submissions_reviewed_byTouser  user?                @relation("set_submissions_reviewed_byTouser", fields: [reviewed_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_set_submissions_reviewer")
+  set_set_submissions_set_idToset         set?                 @relation("set_submissions_set_idToset", fields: [set_id], references: [set_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_set_submissions_set")
+  user_set_submissions_user_idTouser      user                 @relation("set_submissions_user_idTouser", fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_set_submissions_user")
+
+  @@schema("legacy")
+}
+
+model shipping_config {
+  shipping_config_id   Int                    @id @default(autoincrement())
+  user_id              BigInt?
+  name                 String                 @db.VarChar(100)
+  carrier              String?                @db.VarChar(50)
+  service_type         String?                @db.VarChar(100)
+  is_default           Boolean?
+  is_active            Boolean?
+  default_cost         Decimal?               @db.Decimal(10, 2)
+  default_charge       Decimal?               @db.Decimal(10, 2)
+  supply_cost          Decimal?               @db.Decimal(10, 2)
+  notes                String?
+  created              DateTime?              @db.Timestamptz(6)
+  updated              DateTime?              @db.Timestamptz(6)
+  description          String?                @db.VarChar(255)
+  sale                 sale[]
+  sale_order           sale_order[]
+  shipping_config_item shipping_config_item[]
+
+  @@schema("legacy")
+}
+
+model shipping_config_item {
+  shipping_config_item_id Int             @id @default(autoincrement())
+  shipping_config_id      Int
+  supply_type_id          Int
+  quantity                Int
+  shipping_config         shipping_config @relation(fields: [shipping_config_id], references: [shipping_config_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_shipping_config_item_config")
+  supply_type             supply_type     @relation(fields: [supply_type_id], references: [supply_type_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_shipping_config_item_supply_type")
+
+  @@schema("legacy")
+}
+
+model spreadsheet_generation_log {
+  log_id             Int       @id @default(autoincrement())
+  set_id             Int
+  trigger_type       String    @db.VarChar(50)
+  trigger_details    String?
+  generated_at       DateTime? @db.Timestamptz(6)
+  file_size          Int?
+  generation_time_ms Int?
+  success            Boolean
+  error_message      String?
+  blob_url           String?
+  set                set       @relation(fields: [set_id], references: [set_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_log_set")
+
+  @@schema("legacy")
+}
+
+model spreadsheet_generation_queue {
+  queue_id      Int       @id @default(autoincrement())
+  set_id        Int
+  priority      Int?
+  status        String    @db.VarChar(50)
+  queued_at     DateTime? @db.Timestamptz(6)
+  started_at    DateTime? @db.Timestamptz(6)
+  completed_at  DateTime? @db.Timestamptz(6)
+  error_message String?
+  retry_count   Int?
+  set           set       @relation(fields: [set_id], references: [set_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_queue_set")
+
+  @@schema("legacy")
+}
+
+model staging_data {
+  staging_data_id              BigInt    @id @default(autoincrement())
+  primary_key                  BigInt?
+  table_name                   String?
+  field_name                   String?
+  data_value                   String?
+  user                         BigInt?
+  created                      DateTime? @db.Timestamptz(6)
+  user_staging_data_userTouser user?     @relation("staging_data_userTouser", fields: [user], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_staging_data_user")
+
+  @@schema("legacy")
+}
+
+model supply_batch {
+  supply_batch_id    BigInt               @id @default(autoincrement())
+  user_id            BigInt
+  supply_type_id     Int
+  quantity_purchased Int
+  quantity_remaining Int
+  total_cost         Decimal              @db.Decimal(10, 2)
+  cost_per_unit      Decimal              @db.Decimal(10, 6)
+  purchase_date      DateTime?            @db.Timestamptz(6)
+  vendor             String?              @db.VarChar(100)
+  notes              String?
+  created            DateTime?            @db.Timestamptz(6)
+  image_url          String?              @db.VarChar(500)
+  source_url         String?              @db.VarChar(500)
+  is_depleted        Boolean
+  updated            DateTime             @db.Timestamptz(6)
+  order_supply_usage order_supply_usage[]
+  sale_supply_usage  sale_supply_usage[]
+  supply_type        supply_type          @relation(fields: [supply_type_id], references: [supply_type_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_supply_batch_type")
+  user               user                 @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_supply_batch_user")
+
+  @@schema("legacy")
+}
+
+model supply_type {
+  supply_type_id       Int                    @id @default(autoincrement())
+  name                 String                 @db.VarChar(100)
+  category             String?                @db.VarChar(50)
+  description          String?
+  is_active            Boolean?
+  created              DateTime?              @db.Timestamptz(6)
+  user_id              BigInt?
+  shipping_config_item shipping_config_item[]
+  supply_batch         supply_batch[]
+
+  @@schema("legacy")
+}
+
+model team {
+  team_Id                                      Int                     @id @default(autoincrement())
+  name                                         String?
+  city                                         String?
+  mascot                                       String?
+  abbreviation                                 String?
+  organization                                 Int?
+  created                                      DateTime                @db.Timestamptz(6)
+  primary_color                                String?
+  secondary_color                              String?
+  card_count                                   Int?
+  player_count                                 Int?
+  name_indexed                                 String?                 @db.VarChar(255)
+  abbreviation_indexed                         String?                 @db.VarChar(50)
+  city_indexed                                 String?                 @db.VarChar(255)
+  mascot_indexed                               String?                 @db.VarChar(255)
+  slug                                         String                  @db.VarChar(255)
+  player_team_player_team_teamToteam           player_team[]           @relation("player_team_teamToteam")
+  organization_team_organizationToorganization organization?           @relation("team_organizationToorganization", fields: [organization], references: [organization_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_team_organization")
+  team_edit_submissions                        team_edit_submissions[]
+  user_team_user_team_teamToteam               user_team[]             @relation("user_team_teamToteam")
+
+  @@schema("legacy")
+}
+
+model team_edit_submissions {
+  submission_id                                BigInt    @id @default(autoincrement())
+  team_id                                      Int
+  user_id                                      BigInt
+  previous_name                                String?
+  previous_city                                String?
+  previous_mascot                              String?
+  previous_abbreviation                        String?
+  previous_primary_color                       String?
+  previous_secondary_color                     String?
+  proposed_name                                String?
+  proposed_city                                String?
+  proposed_mascot                              String?
+  proposed_abbreviation                        String?
+  proposed_primary_color                       String?
+  proposed_secondary_color                     String?
+  submission_notes                             String?
+  status                                       String    @db.VarChar(20)
+  batch_id                                     String?   @db.VarChar(100)
+  reviewed_by                                  BigInt?
+  reviewed_at                                  DateTime? @db.Timestamptz(6)
+  review_notes                                 String?
+  created_at                                   DateTime  @db.Timestamptz(6)
+  updated_at                                   DateTime? @db.Timestamptz(6)
+  user_team_edit_submissions_reviewed_byTouser user?     @relation("team_edit_submissions_reviewed_byTouser", fields: [reviewed_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_team_edit_submissions_reviewer")
+  team                                         team      @relation(fields: [team_id], references: [team_Id], onDelete: NoAction, onUpdate: NoAction, map: "FK_team_edit_submissions_team")
+  user_team_edit_submissions_user_idTouser     user      @relation("team_edit_submissions_user_idTouser", fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_team_edit_submissions_user")
+
+  @@schema("legacy")
+}
+
+model universal_comments {
+  comment_id                               BigInt               @id @default(autoincrement())
+  user_id                                  BigInt
+  comment_type                             String               @db.VarChar(10)
+  item_id                                  BigInt
+  comment_text                             String
+  parent_comment_id                        BigInt?
+  comment_status                           String               @db.VarChar(20)
+  created_at                               DateTime             @db.Timestamptz(6)
+  updated_at                               DateTime?            @db.Timestamptz(6)
+  is_edited                                Boolean
+  is_deleted                               Boolean
+  deleted_at                               DateTime?            @db.Timestamptz(6)
+  deleted_by                               BigInt?
+  content_reports                          content_reports[]
+  user_universal_comments_deleted_byTouser user?                @relation("universal_comments_deleted_byTouser", fields: [deleted_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_universal_comments_deleted_by")
+  universal_comments                       universal_comments?  @relation("universal_commentsTouniversal_comments", fields: [parent_comment_id], references: [comment_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_universal_comments_parent")
+  other_universal_comments                 universal_comments[] @relation("universal_commentsTouniversal_comments")
+  user_universal_comments_user_idTouser    user                 @relation("universal_comments_user_idTouser", fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_universal_comments_user")
+
+  @@schema("legacy")
+}
+
+model user {
+  user_id                                                           BigInt                      @id @default(autoincrement())
+  name                                                              String?
+  email                                                             String?                     @db.VarChar(500)
+  created                                                           DateTime?                   @db.Timestamptz(6)
+  role                                                              String                      @db.VarChar(50)
+  is_active                                                         Boolean
+  is_verified                                                       Boolean
+  verification_token                                                String?                     @db.VarChar(255)
+  reset_token                                                       String?                     @db.VarChar(255)
+  reset_token_expires                                               DateTime?                   @db.Timestamptz(6)
+  last_login                                                        DateTime?                   @db.Timestamptz(6)
+  login_attempts                                                    Int
+  locked_until                                                      DateTime?                   @db.Timestamptz(6)
+  password_hash                                                     String?                     @db.VarChar(255)
+  first_name                                                        String?                     @db.VarChar(100)
+  last_name                                                         String?                     @db.VarChar(100)
+  created_at                                                        DateTime?                   @db.Timestamptz(6)
+  updated_at                                                        DateTime?                   @db.Timestamptz(6)
+  avatar_url                                                        String?                     @db.VarChar(500)
+  bio                                                               String?                     @db.VarChar(500)
+  website                                                           String?                     @db.VarChar(255)
+  user_location                                                     String?                     @db.VarChar(100)
+  is_public_profile                                                 Boolean
+  profile_completed                                                 Boolean
+  username                                                          String?                     @db.VarChar(50)
+  is_muted                                                          Boolean
+  muted_at                                                          DateTime?                   @db.Timestamptz(6)
+  muted_by                                                          BigInt?
+  seller_role                                                       String?                     @db.VarChar(50)
+  seller_expires                                                    DateTime?                   @db.Timestamptz(6)
+  achievement_challenges_achievement_challenges_resolved_byTouser   achievement_challenges[]    @relation("achievement_challenges_resolved_byTouser")
+  achievement_challenges_achievement_challenges_user_idTouser       achievement_challenges[]    @relation("achievement_challenges_user_idTouser")
+  achievement_history                                               achievement_history[]
+  achievement_notifications                                         achievement_notifications[]
+  admin_action_log                                                  admin_action_log[]
+  admin_set_view                                                    admin_set_view[]
+  card_edit_submissions_card_edit_submissions_reviewed_byTouser     card_edit_submissions[]     @relation("card_edit_submissions_reviewed_byTouser")
+  card_edit_submissions_card_edit_submissions_user_idTouser         card_edit_submissions[]     @relation("card_edit_submissions_user_idTouser")
+  card_submissions_card_submissions_reviewed_byTouser               card_submissions[]          @relation("card_submissions_reviewed_byTouser")
+  card_submissions_card_submissions_user_idTouser                   card_submissions[]          @relation("card_submissions_user_idTouser")
+  collection_view_collection_view_userTouser                        collection_view[]           @relation("collection_view_userTouser")
+  content_reports_content_reports_reporter_user_idTouser            content_reports[]           @relation("content_reports_reporter_user_idTouser")
+  content_reports_content_reports_reviewed_byTouser                 content_reports[]           @relation("content_reports_reviewed_byTouser")
+  contributor_stats                                                 contributor_stats?
+  duplicate_detection                                               duplicate_detection[]
+  duplicate_exclusion                                               duplicate_exclusion[]
+  duplicate_player_group                                            duplicate_player_group[]
+  ebay_purchase                                                     ebay_purchase[]
+  ebay_sync_log                                                     ebay_sync_log[]
+  feedback_response                                                 feedback_response[]
+  feedback_submission_feedback_submission_resolved_byTouser         feedback_submission[]       @relation("feedback_submission_resolved_byTouser")
+  feedback_submission_feedback_submission_user_idTouser             feedback_submission[]       @relation("feedback_submission_user_idTouser")
+  import_job                                                        import_job[]
+  import_mapping                                                    import_mapping[]
+  import_recovery_point                                             import_recovery_point[]
+  moderation_actions                                                moderation_actions[]
+  player_edit_submissions_player_edit_submissions_reviewed_byTouser player_edit_submissions[]   @relation("player_edit_submissions_reviewed_byTouser")
+  player_edit_submissions_player_edit_submissions_user_idTouser     player_edit_submissions[]   @relation("player_edit_submissions_user_idTouser")
+  product_purchase                                                  product_purchase[]
+  product_type                                                      product_type[]
+  sale                                                              sale[]
+  sale_order                                                        sale_order[]
+  series_submissions_series_submissions_reviewed_byTouser           series_submissions[]        @relation("series_submissions_reviewed_byTouser")
+  series_submissions_series_submissions_user_idTouser               series_submissions[]        @relation("series_submissions_user_idTouser")
+  set_submissions_set_submissions_reviewed_byTouser                 set_submissions[]           @relation("set_submissions_reviewed_byTouser")
+  set_submissions_set_submissions_user_idTouser                     set_submissions[]           @relation("set_submissions_user_idTouser")
+  staging_data_staging_data_userTouser                              staging_data[]              @relation("staging_data_userTouser")
+  supply_batch                                                      supply_batch[]
+  team_edit_submissions_team_edit_submissions_reviewed_byTouser     team_edit_submissions[]     @relation("team_edit_submissions_reviewed_byTouser")
+  team_edit_submissions_team_edit_submissions_user_idTouser         team_edit_submissions[]     @relation("team_edit_submissions_user_idTouser")
+  universal_comments_universal_comments_deleted_byTouser            universal_comments[]        @relation("universal_comments_deleted_byTouser")
+  universal_comments_universal_comments_user_idTouser               universal_comments[]        @relation("universal_comments_user_idTouser")
+  user                                                              user?                       @relation("userTouser", fields: [muted_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_muted_by")
+  other_user                                                        user[]                      @relation("userTouser")
+  userSession                                                       userSession[]
+  user_achievement_stats                                            user_achievement_stats[]
+  user_achievements                                                 user_achievements[]
+  user_auth_log                                                     user_auth_log[]
+  user_card_user_card_userTouser                                    user_card[]                 @relation("user_card_userTouser")
+  user_ebay_account                                                 user_ebay_account[]
+  user_favorite_cards                                               user_favorite_cards[]
+  user_follow_user_follow_follower_user_idTouser                    user_follow[]               @relation("user_follow_follower_user_idTouser")
+  user_follow_user_follow_following_user_idTouser                   user_follow[]               @relation("user_follow_following_user_idTouser")
+  user_friendships_user_friendships_friend_user_idTouser            user_friendships[]          @relation("user_friendships_friend_user_idTouser")
+  user_friendships_user_friendships_user_idTouser                   user_friendships[]          @relation("user_friendships_user_idTouser")
+  user_item_subscriptions                                           user_item_subscriptions[]
+  user_list_user_list_userTouser                                    user_list[]                 @relation("user_list_userTouser")
+  user_messages_user_messages_from_user_idTouser                    user_messages[]             @relation("user_messages_from_user_idTouser")
+  user_messages_user_messages_to_user_idTouser                      user_messages[]             @relation("user_messages_to_user_idTouser")
+  user_notifications                                                user_notifications[]
+  user_player_user_player_userTouser                                user_player[]               @relation("user_player_userTouser")
+  user_series_user_series_userTouser                                user_series[]               @relation("user_series_userTouser")
+  user_series_completion                                            user_series_completion[]
+  user_session                                                      user_session[]
+  user_streaks                                                      user_streaks[]
+  user_table_preferences_user_table_preferences_userTouser          user_table_preferences[]    @relation("user_table_preferences_userTouser")
+  user_team_user_team_userTouser                                    user_team[]                 @relation("user_team_userTouser")
+  user_wrapped                                                      user_wrapped[]
+
+  @@schema("legacy")
+}
+
+model userSession {
+  session_id    BigInt    @id @default(autoincrement())
+  user_id       BigInt
+  session_token String?
+  token_hash    String?   @db.VarChar(500)
+  ip_address    String?   @db.VarChar(45)
+  user_agent    String?
+  last_accessed DateTime? @db.Timestamptz(6)
+  expires_at    DateTime? @db.Timestamptz(6)
+  created       DateTime? @db.Timestamptz(6)
+  user          user      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__userSessi__user___21A0F6C4")
+
+  @@schema("legacy")
+}
+
+model user_achievement_stats {
+  stat_id                BigInt    @id @default(autoincrement())
+  user_id                BigInt
+  total_points           Int?
+  total_achievements     Int?
+  common_achievements    Int?
+  uncommon_achievements  Int?
+  rare_achievements      Int?
+  epic_achievements      Int?
+  legendary_achievements Int?
+  mythic_achievements    Int?
+  completion_percentage  Decimal?  @db.Decimal(5, 2)
+  longest_streak         Int?
+  current_streak         Int?
+  last_achievement_date  DateTime? @db.Timestamptz(6)
+  achievement_rate       Decimal?  @db.Decimal(10, 2)
+  points_rank            Int?
+  achievements_rank      Int?
+  percentile_rank        Decimal?  @db.Decimal(5, 2)
+  updated_at             DateTime? @db.Timestamptz(6)
+  user                   user      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__user_achi__user___02E7657A")
+
+  @@schema("legacy")
+}
+
+model user_achievements {
+  user_achievement_id  BigInt       @id @default(autoincrement())
+  user_id              BigInt
+  achievement_id       BigInt
+  progress             Int?
+  progress_percentage  Decimal?     @db.Decimal(5, 2)
+  is_completed         Boolean?
+  completed_at         DateTime?    @db.Timestamptz(6)
+  points_awarded       Int?
+  times_completed      Int?
+  created_at           DateTime     @db.Timestamptz(6)
+  last_progress_update DateTime?    @db.Timestamptz(6)
+  achievements         achievements @relation(fields: [achievement_id], references: [achievement_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__user_achi__achie__6FD49106")
+  user                 user         @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__user_achi__user___6EE06CCD")
+
+  @@schema("legacy")
+}
+
+model user_auth_log {
+  log_id        BigInt   @id @default(autoincrement())
+  user_id       BigInt?
+  event_type    String   @db.VarChar(50)
+  ip_address    String?  @db.VarChar(45)
+  user_agent    String?  @db.VarChar(500)
+  success       Boolean
+  details       String?
+  created       DateTime @db.Timestamptz(6)
+  email         String?  @db.VarChar(255)
+  error_message String?
+  user          user?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__user_auth__user___23893F36")
+
+  @@schema("legacy")
+}
+
+model user_card {
+  user_card_id                                            BigInt                @id @default(autoincrement())
+  user                                                    BigInt?
+  card                                                    BigInt?
+  serial_number                                           Int?
+  purchase_price                                          Decimal?              @db.Decimal(19, 4)
+  estimated_value                                         Decimal?              @db.Decimal(19, 4)
+  current_value                                           Decimal?              @db.Decimal(19, 4)
+  photo                                                   String?
+  notes                                                   String?
+  card_variation                                          BigInt?
+  grading_agency                                          Int?
+  grade                                                   Decimal?              @db.Decimal(18, 0)
+  grade_id                                                BigInt?
+  aftermarket_autograph                                   Boolean?
+  is_for_sale                                             Boolean?
+  is_wanted                                               Boolean?
+  is_special                                              Boolean?
+  is_labeled                                              Boolean?
+  user_location                                           BigInt?
+  random_code                                             String?
+  created                                                 DateTime?             @db.Timestamptz(6)
+  ebay_purchase_id                                        BigInt?
+  sold_at                                                 DateTime?             @db.Timestamptz(6)
+  sale_id                                                 BigInt?
+  card_card_reference_user_cardTouser_card                card[]                @relation("card_reference_user_cardTouser_card")
+  card_user_card_cardTocard                               card?                 @relation("user_card_cardTocard", fields: [card], references: [card_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_card_card")
+  card_variation_user_card_card_variationTocard_variation card_variation?       @relation("user_card_card_variationTocard_variation", fields: [card_variation], references: [card_variation_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_card_card_variation")
+  user_user_card_userTouser                               user?                 @relation("user_card_userTouser", fields: [user], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_card_user")
+  user_location_user_card_user_locationTouser_location    user_location?        @relation("user_card_user_locationTouser_location", fields: [user_location], references: [user_location_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_card_user_location")
+  user_card_photo_user_card_photo_user_cardTouser_card    user_card_photo[]     @relation("user_card_photo_user_cardTouser_card")
+  user_favorite_cards                                     user_favorite_cards[]
+
+  @@schema("legacy")
+}
+
+model user_card_photo {
+  user_card_photo_id                             BigInt     @id @default(autoincrement())
+  user_card                                      BigInt?
+  photo_url                                      String?
+  created                                        DateTime?  @db.Timestamptz(6)
+  sort_order                                     Int
+  user_card_user_card_photo_user_cardTouser_card user_card? @relation("user_card_photo_user_cardTouser_card", fields: [user_card], references: [user_card_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_card_photo_user_card")
+
+  @@schema("legacy")
+}
+
+model user_ebay_account {
+  account_id       BigInt    @id @default(autoincrement())
+  user_id          BigInt
+  ebay_user_id     String?   @db.VarChar(255)
+  access_token     String?
+  refresh_token    String?
+  token_expires_at DateTime? @db.Timestamptz(6)
+  is_active        Boolean?
+  created_at       DateTime? @db.Timestamptz(6)
+  updated_at       DateTime? @db.Timestamptz(6)
+  user             user      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__user_ebay__user___0ABD916C")
+
+  @@schema("legacy")
+}
+
+model user_favorite_cards {
+  favorite_id  BigInt    @id @default(autoincrement())
+  user_id      BigInt
+  user_card_id BigInt
+  sort_order   Int
+  created_at   DateTime  @db.Timestamptz(6)
+  updated_at   DateTime  @db.Timestamptz(6)
+  user         user      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_favorite_cards_user")
+  user_card    user_card @relation(fields: [user_card_id], references: [user_card_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_favorite_cards_user_card")
+
+  @@schema("legacy")
+}
+
+model user_follow {
+  user_follow_id                           BigInt   @id @default(autoincrement())
+  follower_user_id                         BigInt
+  following_user_id                        BigInt
+  created                                  DateTime @db.Timestamptz(6)
+  user_user_follow_follower_user_idTouser  user     @relation("user_follow_follower_user_idTouser", fields: [follower_user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_follow_follower")
+  user_user_follow_following_user_idTouser user     @relation("user_follow_following_user_idTouser", fields: [following_user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_follow_following")
+
+  @@schema("legacy")
+}
+
+model user_friendships {
+  friendship_id                              BigInt    @id @default(autoincrement())
+  user_id                                    BigInt
+  friend_user_id                             BigInt
+  status                                     String?   @db.VarChar(20)
+  created_at                                 DateTime? @db.Timestamptz(6)
+  accepted_at                                DateTime? @db.Timestamptz(6)
+  user_user_friendships_friend_user_idTouser user      @relation("user_friendships_friend_user_idTouser", fields: [friend_user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__user_frie__frien__72E607DB")
+  user_user_friendships_user_idTouser        user      @relation("user_friendships_user_idTouser", fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__user_frie__user___71F1E3A2")
+
+  @@schema("legacy")
+}
+
+model user_item_subscriptions {
+  subscription_id BigInt   @id @default(autoincrement())
+  user_id         BigInt
+  item_type       String   @db.VarChar(10)
+  item_id         BigInt
+  subscribed_at   DateTime @db.Timestamptz(6)
+  is_active       Boolean
+  user            user     @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_item_subscriptions_user")
+
+  @@schema("legacy")
+}
+
+model user_list {
+  user_list_id              BigInt    @id @default(autoincrement())
+  user                      BigInt?
+  name                      String?
+  created                   DateTime? @db.Timestamptz(6)
+  card_count                Int?
+  is_public                 Boolean?
+  summary                   String?
+  user_user_list_userTouser user?     @relation("user_list_userTouser", fields: [user], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_list_user")
+
+  @@schema("legacy")
+}
+
+model user_list_card {
+  user_list_card_id BigInt    @id @default(autoincrement())
+  user_list         BigInt?
+  card              BigInt?
+  created           DateTime? @db.Timestamptz(6)
+
+  @@schema("legacy")
+}
+
+model user_location {
+  user_location_id                                 BigInt      @id @default(autoincrement())
+  user                                             BigInt?
+  location                                         String?
+  created                                          DateTime?   @db.Timestamptz(6)
+  card_count                                       Int?
+  is_dashboard                                     Boolean?
+  user_card_user_card_user_locationTouser_location user_card[] @relation("user_card_user_locationTouser_location")
+
+  @@schema("legacy")
+}
+
+model user_messages {
+  message_id                            BigInt    @id @default(autoincrement())
+  from_user_id                          BigInt
+  to_user_id                            BigInt
+  subject                               String?   @db.VarChar(255)
+  message                               String
+  is_read                               Boolean?
+  created_at                            DateTime? @db.Timestamptz(6)
+  read_at                               DateTime? @db.Timestamptz(6)
+  user_user_messages_from_user_idTouser user      @relation("user_messages_from_user_idTouser", fields: [from_user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__user_mess__from___6B44E613")
+  user_user_messages_to_user_idTouser   user      @relation("user_messages_to_user_idTouser", fields: [to_user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__user_mess__to_us__6C390A4C")
+
+  @@schema("legacy")
+}
+
+model user_notifications {
+  notification_id BigInt    @id @default(autoincrement())
+  user_id         BigInt
+  type            String    @db.VarChar(50)
+  title           String    @db.VarChar(255)
+  message         String?
+  data            String?
+  is_read         Boolean?
+  created_at      DateTime? @db.Timestamptz(6)
+  read_at         DateTime? @db.Timestamptz(6)
+  user            user      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__user_noti__user___668030F6")
+
+  @@schema("legacy")
+}
+
+model user_player {
+  user_player_id                    BigInt    @id @default(autoincrement())
+  user                              BigInt
+  player                            BigInt
+  created                           DateTime? @db.Timestamptz(6)
+  player_user_player_playerToplayer player    @relation("user_player_playerToplayer", fields: [player], references: [player_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_player_player")
+  user_user_player_userTouser       user      @relation("user_player_userTouser", fields: [user], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_player_user")
+
+  @@schema("legacy")
+}
+
+model user_series {
+  user_series_id                    BigInt    @id @default(autoincrement())
+  user                              BigInt
+  series                            BigInt
+  created                           DateTime? @db.Timestamptz(6)
+  last_viewed                       DateTime? @db.Timestamptz(6)
+  series_user_series_seriesToseries series    @relation("user_series_seriesToseries", fields: [series], references: [series_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_series_series")
+  user_user_series_userTouser       user      @relation("user_series_userTouser", fields: [user], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_series_user")
+
+  @@schema("legacy")
+}
+
+model user_series_completion {
+  user_series_completion_id BigInt    @id @default(autoincrement())
+  user_id                   BigInt
+  series_id                 BigInt
+  total_cards               Int
+  owned_cards               Int
+  completion_percentage     Decimal   @db.Decimal(5, 2)
+  is_complete               Boolean
+  last_updated              DateTime? @db.Timestamptz(6)
+  series                    series    @relation(fields: [series_id], references: [series_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__user_seri__serie__29CC2871")
+  user                      user      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__user_seri__user___28D80438")
+
+  @@schema("legacy")
+}
+
+model user_session {
+  session_id    BigInt    @id @default(autoincrement())
+  user_id       BigInt
+  token_hash    String    @db.VarChar(255)
+  ip_address    String?   @db.VarChar(45)
+  user_agent    String?   @db.VarChar(500)
+  expires_at    DateTime  @db.Timestamptz(6)
+  created       DateTime  @db.Timestamptz(6)
+  last_activity DateTime  @db.Timestamptz(6)
+  session_token String?   @db.VarChar(500)
+  last_accessed DateTime? @db.Timestamptz(6)
+  user          user      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__user_sess__user___2EFAF1E2")
+
+  @@schema("legacy")
+}
+
+model user_session_new {
+  session_id    BigInt    @id @default(autoincrement())
+  user_id       BigInt
+  session_token String?   @db.VarChar(500)
+  expires_at    DateTime  @db.Timestamptz(6)
+  created       DateTime  @db.Timestamptz(6)
+  last_accessed DateTime? @db.Timestamptz(6)
+  ip_address    String?   @db.VarChar(45)
+  user_agent    String?   @db.VarChar(500)
+  token_hash    String?   @db.VarChar(500)
+
+  @@schema("legacy")
+}
+
+model user_streaks {
+  streak_id          BigInt    @id @default(autoincrement())
+  user_id            BigInt
+  streak_type        String    @db.VarChar(50)
+  current_count      Int?
+  longest_count      Int?
+  last_activity_date DateTime? @db.Date
+  streak_start_date  DateTime? @db.Date
+  is_active          Boolean?
+  created_at         DateTime  @db.Timestamptz(6)
+  updated_at         DateTime? @db.Timestamptz(6)
+  user               user      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__user_stre__user___18D6A699")
+
+  @@schema("legacy")
+}
+
+model user_table_preferences {
+  preference_id                          BigInt    @id @default(autoincrement())
+  user                                   BigInt
+  table_name                             String    @db.VarChar(100)
+  visible_columns                        String
+  column_order                           String?
+  created_at                             DateTime? @db.Timestamptz(6)
+  updated_at                             DateTime? @db.Timestamptz(6)
+  user_user_table_preferences_userTouser user      @relation("user_table_preferences_userTouser", fields: [user], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_table_preferences_user")
+
+  @@schema("legacy")
+}
+
+model user_team {
+  user_team_id              BigInt    @id @default(autoincrement())
+  user                      BigInt?
+  team                      Int?
+  created                   DateTime? @db.Timestamptz(6)
+  team_user_team_teamToteam team?     @relation("user_team_teamToteam", fields: [team], references: [team_Id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_team_team")
+  user_user_team_userTouser user?     @relation("user_team_userTouser", fields: [user], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_team_user")
+
+  @@schema("legacy")
+}
+
+model user_wrapped {
+  wrapped_id      BigInt   @id @default(autoincrement())
+  user_id         BigInt
+  year            Int
+  stats_json      String?
+  generated_at    DateTime @db.Timestamptz(6)
+  share_token     String?  @db.VarChar(32)
+  share_image_url String?  @db.VarChar(500)
+  user            user     @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_wrapped_user")
+
+  @@schema("legacy")
+}

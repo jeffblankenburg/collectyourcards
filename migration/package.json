@@ -1,0 +1,28 @@
+{
+  "name": "cyc-migration",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Production ETL: full Azure SQL Server -> Supabase Postgres migration (metadata-driven).",
+  "scripts": {
+    "inspect": "tsx src/cli.ts inspect",
+    "ddl": "tsx src/cli.ts ddl",
+    "migrate": "tsx src/cli.ts migrate",
+    "verify": "tsx src/cli.ts verify",
+    "all": "tsx src/cli.ts all"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "mssql": "^11.0.1",
+    "pg": "^8.13.1",
+    "pg-copy-streams": "^6.0.6"
+  },
+  "devDependencies": {
+    "@types/mssql": "^9.1.5",
+    "@types/node": "^22.10.0",
+    "@types/pg": "^8.11.10",
+    "@types/pg-copy-streams": "^1.2.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.2"
+  }
+}

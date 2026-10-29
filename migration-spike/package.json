@@ -1,0 +1,25 @@
+{
+  "name": "cyc-migration-spike",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Proves Azure SQL -> Supabase Postgres migration on a referentially-closed slice.",
+  "scripts": {
+    "spike": "tsx src/cli.ts all",
+    "extract": "tsx src/cli.ts extract",
+    "load": "tsx src/cli.ts load",
+    "verify": "tsx src/cli.ts verify"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "mssql": "^11.0.1",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@types/mssql": "^9.1.5",
+    "@types/node": "^22.10.0",
+    "@types/pg": "^8.11.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.2"
+  }
+}
