@@ -1,0 +1,169 @@
+@import "tailwindcss";
+
+@theme {
+  /* Fonts (wired via next/font CSS variables in layout.tsx) */
+  --font-display: var(--font-bricolage);
+  --font-sans: var(--font-archivo);
+  --font-mono: var(--font-space-mono);
+
+  /* Brand palette — deep navy, electric blue, gold chase accent */
+  --color-base: #080b14;
+  --color-ink: #eaf0fb;
+  --color-muted: #8b97ac;
+  --color-brand: #5b92ff;
+  --color-gold: #f4cd6b;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--color-base);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-brand) 40%, transparent);
+  color: #fff;
+}
+
+/* Brand wordmark treatment (ported from the legacy app): bold system sans with
+   a subtle white gradient clipped to the text. Size is set per-usage. */
+.brand-wordmark {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  font-weight: 700;
+  white-space: nowrap;
+  background: linear-gradient(45deg, #e5e7eb, #ffffff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* ─── Background atmosphere ─────────────────────────────────────────────
+   Two soft glows (blue top, gold lower) + a faint 9-pocket binder grid +
+   grain. Fixed, decorative, sits behind everything. */
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      60rem 40rem at 78% -8%,
+      color-mix(in oklab, var(--color-brand) 30%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      44rem 38rem at 8% 108%,
+      color-mix(in oklab, var(--color-gold) 16%, transparent),
+      transparent 55%
+    );
+}
+
+.binder-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 76px 106px; /* card-proportioned pockets */
+  -webkit-mask-image: radial-gradient(
+    120% 90% at 50% 0%,
+    #000 10%,
+    transparent 72%
+  );
+  mask-image: radial-gradient(120% 90% at 50% 0%, #000 10%, transparent 72%);
+}
+
+.grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ─── Card marquee ──────────────────────────────────────────────────────
+   Continuous river of real card scans. The track holds two identical copies,
+   so translating -50% loops seamlessly. */
+@keyframes cyc-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.animate-carousel {
+  animation: cyc-scroll 60s linear infinite;
+  will-change: transform;
+}
+
+/* Floating motion — animates `transform` (not the `translate` property), so it
+   composes with Tailwind v4's `translate-x`/`rotate` utilities (which use the
+   individual `translate:`/`rotate:` properties) on the fanned cards instead of
+   overriding them. */
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+.float-slow {
+  animation: floaty 6.5s ease-in-out infinite;
+}
+.float-med {
+  animation: floaty 6s ease-in-out infinite 0.3s;
+}
+.float-fast {
+  animation: floaty 5.5s ease-in-out infinite 0.15s;
+}
+
+/* Entrance — one orchestrated, staggered page-load reveal */
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 16px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+.reveal {
+  opacity: 0;
+  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-carousel,
+  .float-slow,
+  .float-med,
+  .float-fast {
+    animation: none;
+  }
+  .reveal {
+    opacity: 1;
+    animation: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
