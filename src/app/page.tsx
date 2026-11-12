@@ -3,19 +3,22 @@ import { CardMarquee } from "@/components/home/card-marquee";
 import { FeatureList } from "@/components/home/feature-list";
 import { CompletionStrip } from "@/components/home/completion-strip";
 import { StickyCta } from "@/components/home/sticky-cta";
+import { getDatabaseStats, formatStat } from "@/lib/stats";
 
-// Published catalog figures. TODO: wire to a /api/database-stats endpoint once
-// the data layer lands (migration DB is ready) so these stay current.
-const STATS = [
-  { value: "793K", label: "Cards" },
-  { value: "6,965", label: "Players" },
-  { value: "135", label: "Teams" },
-];
+export default async function HomePage() {
+  const stats = await getDatabaseStats();
+  const heroStats = [
+    { value: formatStat(stats.cards), label: "Cards" },
+    { value: formatStat(stats.players), label: "Players" },
+    { value: formatStat(stats.teams), label: "Teams" },
+  ];
 
-export default function HomePage() {
+  // The hero fan, marquee, and CTA each render their own dynamic (per-request)
+  // content behind a Suspense boundary — so this shell still prerenders while
+  // the cards reshuffle and the CTA reflects auth on every load.
   return (
     <>
-      <Hero stats={STATS} />
+      <Hero stats={heroStats} />
       <CardMarquee />
       <FeatureList />
       <CompletionStrip />

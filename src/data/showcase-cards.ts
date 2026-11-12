@@ -13,6 +13,13 @@ export type ShowcaseCard = {
   year: number;
   number: string;
   href: string;
+  // Landscape (wider-than-tall) scan. The hero fan uses a fixed 5:7 portrait
+  // frame and would crop these oddly, so it skips them; the marquee, which
+  // sizes to each card's real aspect ratio, shows them fine.
+  landscape?: boolean;
+  // Team key (team_id as string) for the "max N cards per team" cap on the home
+  // page. Only populated for live collection cards; the curated list omits it.
+  team?: string;
 };
 
 export const SHOWCASE_CARDS: ShowcaseCard[] = [
@@ -41,7 +48,8 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
     "series": "1960 Topps Baseball",
     "year": 1960,
     "number": "1",
-    "href": "/cards/774420"
+    "href": "/cards/774420",
+    "landscape": true
   },
   {
     "cardId": 774428,
@@ -50,7 +58,8 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
     "series": "1960 Topps Baseball",
     "year": 1960,
     "number": "10",
-    "href": "/cards/774428"
+    "href": "/cards/774428",
+    "landscape": true
   },
   {
     "cardId": 774486,
@@ -59,7 +68,8 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
     "series": "1960 Topps Baseball",
     "year": 1960,
     "number": "73",
-    "href": "/cards/774486"
+    "href": "/cards/774486",
+    "landscape": true
   },
   {
     "cardId": 778554,

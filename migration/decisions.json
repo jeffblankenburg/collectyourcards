@@ -1,0 +1,14 @@
+{
+  "UNIQUE.series.slug": {
+    "decision": "fix",
+    "note": "70 distinct series (different sets) collide on slug; suffix each dup with -<series_id> to make unique, then enforce UNIQUE."
+  },
+  "NOTNULL.card.series": {
+    "decision": "fix",
+    "note": "22 orphan cards (BBA-* inserts, no series/players/owners; 11 are exact double-entry dups). Delete them, then enforce card.series_id NOT NULL."
+  },
+  "FK.card.series": {
+    "decision": "fix",
+    "note": "725 cards reference deleted series #217 (225 have player links). Recreate #217 as a recovery placeholder, then add+enforce card.series_id -> series FK."
+  }
+}

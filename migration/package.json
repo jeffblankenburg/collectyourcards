@@ -7,9 +7,12 @@
   "scripts": {
     "inspect": "tsx src/cli.ts inspect",
     "ddl": "tsx src/cli.ts ddl",
+    "audit": "tsx src/cli.ts audit",
     "migrate": "tsx src/cli.ts migrate",
+    "fix": "tsx src/cli.ts fix",
     "verify": "tsx src/cli.ts verify",
-    "all": "tsx src/cli.ts all"
+    "all": "tsx src/cli.ts all",
+    "finalize": "tsx src/cli.ts finalize"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

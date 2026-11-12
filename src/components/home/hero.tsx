@@ -1,11 +1,11 @@
-import { Search } from "lucide-react";
 import { CardFan } from "@/components/home/card-fan";
+import { HomeSearch } from "@/components/home/home-search";
 
 type Stat = { value: string; label: string };
 
 export function Hero({ stats }: { stats: Stat[] }) {
   return (
-    <section className="mx-auto max-w-screen-sm px-4 pt-6 pb-4">
+    <section className="relative z-30 mx-auto max-w-screen-sm px-4 pt-6 pb-4">
       <CardFan />
 
       <p className="reveal mt-2 font-mono text-[11px] tracking-[0.22em] text-brand uppercase [animation-delay:60ms]">
@@ -27,21 +27,12 @@ export function Hero({ stats }: { stats: Stat[] }) {
         seconds — from the couch or the card show.
       </p>
 
-      {/* Real search entry → the catalog search page (wired in a later phase) */}
-      <form
-        action="/search"
-        className="reveal mt-5 flex items-center gap-2.5 rounded-full border border-white/12 bg-white/[0.06] py-2.5 pr-2.5 pl-4 backdrop-blur transition focus-within:border-brand/60 focus-within:bg-white/[0.09] [animation-delay:280ms]"
-      >
-        <Search className="size-[18px] shrink-0 text-muted" aria-hidden />
-        <input
-          name="q"
-          type="search"
-          enterKeyHint="search"
-          placeholder="Search cards, players, sets…"
-          aria-label="Search the card database"
-          className="w-full bg-transparent text-[15px] text-ink placeholder:text-muted/70 focus:outline-none"
-        />
-      </form>
+      {/* Instant as-you-type catalog search. relative z-50 keeps the dropdown
+          above the later `reveal` siblings (stats row), which create their own
+          z-0 stacking contexts via their transform animation. */}
+      <div className="reveal relative z-50 mt-5 [animation-delay:280ms]">
+        <HomeSearch />
+      </div>
 
       {/* Tight stat row — mono figures, hairline dividers, no boxes */}
       <dl className="reveal mt-6 grid grid-cols-3 divide-x divide-white/8 text-center [animation-delay:360ms]">

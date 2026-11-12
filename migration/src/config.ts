@@ -49,13 +49,15 @@ export const TARGET_SCHEMA = process.env.TARGET_SCHEMA ?? "legacy";
 // prime directive is data preservation. These are documented defer/drop candidates;
 // uncomment to exclude. Operational/transient tables only.
 export const SKIP_TABLES = new Set<string>([
+  // Empty duplicate session tables: both 0 rows, and "userSession" collides with
+  // "user_session" once snake-cased. Dropping loses no data (Supabase Auth owns
+  // sessions going forward). The populated user_session (197 rows) is kept.
+  "userSession",
+  "user_session_new",
+  // Other documented defer/drop candidates (keep migrating by default):
   // "staging_data",
   // "import_recovery_point",
-  // "import_staging",
-  // "import_series_staging",
   // "duplicate_detection_job",
-  // "duplicate_player_group",
-  // "duplicate_player_member",
   // "campaign_visit",
 ]);
 

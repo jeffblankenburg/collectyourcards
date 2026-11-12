@@ -1,0 +1,465 @@
+{
+  "generatedAgainst": "azure",
+  "findings": [
+    {
+      "id": "FK.card.series",
+      "severity": "BLOCKER",
+      "category": "FK_ORPHAN",
+      "target": "SYNTHETIC FK card(series) -> series",
+      "count": 725,
+      "gate": "gated",
+      "samples": [],
+      "proposedFixes": [
+        "recreate missing parent(s)",
+        "delete orphan child rows",
+        "skip this FK"
+      ]
+    },
+    {
+      "id": "FK.user_list_card.user_list",
+      "severity": "INFO",
+      "category": "FK_ORPHAN",
+      "target": "SYNTHETIC FK user_list_card(user_list) -> user_list",
+      "count": 0,
+      "gate": "clean",
+      "samples": [],
+      "proposedFixes": []
+    },
+    {
+      "id": "FK.user_list_card.card",
+      "severity": "INFO",
+      "category": "FK_ORPHAN",
+      "target": "SYNTHETIC FK user_list_card(card) -> card",
+      "count": 0,
+      "gate": "clean",
+      "samples": [],
+      "proposedFixes": []
+    },
+    {
+      "id": "UNIQUE.series.slug",
+      "severity": "BLOCKER",
+      "category": "UNIQUE",
+      "target": "UNIQUE series.slug",
+      "count": 70,
+      "gate": "gated",
+      "samples": [
+        {
+          "slug": "1998-pacific",
+          "n": "2"
+        },
+        {
+          "slug": "2020-bowman-platinum",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-aqua-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-autographs",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-autographs-atomic-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-autographs-black-mojo-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-autographs-blue-mojo-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-autographs-blue-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-autographs-gold-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-autographs-gold-shimmer-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-autographs-green-mojo-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-autographs-green-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-autographs-mojo-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-autographs-orange-mojo-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-autographs-orange-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-autographs-orange-shimmer-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-autographs-purple-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-autographs-red-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-autographs-red-shimmer-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-autographs-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-autographs-speckle-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-autographs-superfractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-autographs-yellow-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-blue-mojo-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-blue-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-fuchsia-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-fuchsia-shimmer-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-gold-mojo-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-gold-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-gold-shimmer-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-green-mojo-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-green-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-green-shimmer-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-mojo-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-orange-mojo-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-orange-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-orange-shimmer-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-pink-mojo-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-purple-mojo-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-purple-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-red-mojo-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-red-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-red-shimmer-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-speckle-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-superfractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-prospects-yellow-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-rookie-autographs",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-rookie-autographs-blue-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-rookie-autographs-gold-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-rookie-autographs-green-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-rookie-autographs-orange-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-rookie-autographs-red-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-rookie-autographs-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-chrome-rookie-autographs-superfractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-bowman-platinum",
+          "n": "2"
+        },
+        {
+          "slug": "2021-topps-stadium-club-chrome",
+          "n": "2"
+        },
+        {
+          "slug": "2021-topps-stadium-club-chrome-autographs",
+          "n": "2"
+        },
+        {
+          "slug": "2021-topps-stadium-club-chrome-autographs-superfractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-topps-stadium-club-chrome-orange-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-topps-stadium-club-chrome-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2021-topps-stadium-club-chrome-superfractors",
+          "n": "2"
+        },
+        {
+          "slug": "2022-topps-stadium-club-chrome",
+          "n": "2"
+        },
+        {
+          "slug": "2022-topps-stadium-club-chrome-orange-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2022-topps-stadium-club-chrome-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2022-topps-stadium-club-chrome-superfractors",
+          "n": "2"
+        },
+        {
+          "slug": "2024-topps-chrome-black-refractors",
+          "n": "2"
+        },
+        {
+          "slug": "2025-donruss",
+          "n": "2"
+        },
+        {
+          "slug": "2025-topps-holiday",
+          "n": "2"
+        }
+      ],
+      "proposedFixes": [
+        "suffix-slug (append -<id> to dups)",
+        "merge duplicates",
+        "skip (leave non-unique)"
+      ]
+    },
+    {
+      "id": "NOTNULL.card.series",
+      "severity": "BLOCKER",
+      "category": "NOT_NULL",
+      "target": "NOT NULL card.series",
+      "count": 22,
+      "gate": "gated",
+      "samples": [
+        {
+          "card_id": "180875"
+        },
+        {
+          "card_id": "180876"
+        },
+        {
+          "card_id": "180877"
+        },
+        {
+          "card_id": "180878"
+        },
+        {
+          "card_id": "180879"
+        },
+        {
+          "card_id": "180880"
+        },
+        {
+          "card_id": "180881"
+        },
+        {
+          "card_id": "180882"
+        },
+        {
+          "card_id": "180883"
+        },
+        {
+          "card_id": "180884"
+        },
+        {
+          "card_id": "180885"
+        },
+        {
+          "card_id": "180886"
+        },
+        {
+          "card_id": "180887"
+        },
+        {
+          "card_id": "180888"
+        },
+        {
+          "card_id": "180889"
+        },
+        {
+          "card_id": "180890"
+        },
+        {
+          "card_id": "180891"
+        },
+        {
+          "card_id": "180892"
+        },
+        {
+          "card_id": "180893"
+        },
+        {
+          "card_id": "180894"
+        },
+        {
+          "card_id": "180895"
+        },
+        {
+          "card_id": "180896"
+        }
+      ],
+      "proposedFixes": [
+        "assign a value to the nulls",
+        "delete the null rows",
+        "skip (leave nullable)"
+      ]
+    },
+    {
+      "id": "TYPEFIT.user_card.grade",
+      "severity": "INFO",
+      "category": "TYPE_FIT",
+      "target": "user_card.grade -> numeric(4,1)",
+      "count": 0,
+      "gate": "clean",
+      "samples": [],
+      "proposedFixes": []
+    },
+    {
+      "id": "TYPEFIT.player.birthdate",
+      "severity": "INFO",
+      "category": "TYPE_FIT",
+      "target": "player.birthdate -> date (drops time)",
+      "count": 0,
+      "gate": "clean",
+      "samples": [],
+      "proposedFixes": []
+    },
+    {
+      "id": "TYPEFIT.user_card.purchase_price",
+      "severity": "INFO",
+      "category": "TYPE_FIT",
+      "target": "user_card.purchase_price -> numeric(12,2)",
+      "count": 0,
+      "gate": "clean",
+      "samples": [],
+      "proposedFixes": []
+    },
+    {
+      "id": "TYPEFIT.user_card.estimated_value",
+      "severity": "INFO",
+      "category": "TYPE_FIT",
+      "target": "user_card.estimated_value -> numeric(12,2)",
+      "count": 0,
+      "gate": "clean",
+      "samples": [],
+      "proposedFixes": []
+    },
+    {
+      "id": "TYPEFIT.user_card.current_value",
+      "severity": "INFO",
+      "category": "TYPE_FIT",
+      "target": "user_card.current_value -> numeric(12,2)",
+      "count": 0,
+      "gate": "clean",
+      "samples": [],
+      "proposedFixes": []
+    }
+  ]
+}

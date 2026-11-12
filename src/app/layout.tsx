@@ -48,6 +48,13 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: "#080b14",
   viewportFit: "cover",
+  // Lock the page scale: stops iOS from auto-zooming when a textbox is focused
+  // and disables native pinch-to-zoom (which fights our layouts). The one place
+  // zoom is wanted — the full-screen card viewer — uses react-zoom-pan-pinch
+  // (JS transforms), so it keeps working regardless of this.
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -1,16 +1,16 @@
+import { Suspense } from "react";
+import Link from "next/link";
 import { CardImage } from "@/components/card-image";
-import { SHOWCASE_CARDS } from "@/data/showcase-cards";
+import { getHomeShowcase } from "@/lib/home-showcase";
 
-// The hero moment: three real, raw (ungraded) iconic cards fanned like a hand
-// pulled from a pack — vintage (Clemente '59), the rookie (Griffey '89), modern
-// color (Trout 2025). Wrapper owns the static fan transform; CardImage owns the
-// float (see card-fan history / the tailwind-v4 transform note). Decorative.
-const byId = (id: number) => SHOWCASE_CARDS.find((c) => c.cardId === id)!;
-
-const FAN = [
+// The hero moment: three real, raw (ungraded) cards fanned like a hand pulled
+// from a pack. The cards are chosen at random per page load (one per player,
+// portrait-only — see lib/showcase) and dropped into these fixed left/center/
+// right slots. Wrapper owns the static fan transform; CardImage owns the float
+// (see card-fan history / the tailwind-v4 transform note). Decorative.
+const SLOTS = [
   {
     key: "left",
-    card: byId(56304), // Roberto Clemente — 1959 Topps
     float: "float-slow",
     transform: "translate(-72px, 22px) rotate(-15deg)",
     z: "z-0",
@@ -18,7 +18,6 @@ const FAN = [
   },
   {
     key: "right",
-    card: byId(1008448), // Mike Trout — 2025 Topps Archives Red Hot Foilboard
     float: "float-fast",
     transform: "translate(72px, 22px) rotate(15deg)",
     z: "z-0",
@@ -26,38 +25,60 @@ const FAN = [
   },
   {
     key: "center",
-    card: byId(904939), // Ken Griffey Jr — 1989 Upper Deck (the rookie)
     float: "float-med",
     transform: "rotate(-4deg)",
     z: "z-10",
     extra: "",
     priority: true,
   },
-];
+] as const;
+
+// Fixed-size stage (and its glow puck) so the Suspense fallback holds the exact
+// layout while the per-request cards stream in — no shift.
+function Stage({ children }: { children?: React.ReactNode }) {
+  return (
+    <div className="relative mx-auto grid h-56 w-full max-w-sm place-items-center overflow-hidden">
+      <div
+        aria-hidden
+        className="col-start-1 row-start-1 h-40 w-44 rounded-full bg-brand/25 blur-3xl"
+      />
+      {children}
+    </div>
+  );
+}
+
+async function Fan() {
+  const { fan: cards } = await getHomeShowcase();
+  return (
+    <Stage>
+      {SLOTS.map((slot, i) => {
+        const card = cards[i];
+        if (!card) return null;
+        return (
+          <Link
+            key={slot.key}
+            href={card.href}
+            aria-label={`${card.player} — ${card.series}`}
+            className={`col-start-1 row-start-1 ${slot.z}`}
+            style={{ transform: slot.transform }}
+          >
+            <CardImage
+              card={card}
+              priority={"priority" in slot ? slot.priority : undefined}
+              sizes={slot.key === "center" ? "150px" : "112px"}
+              className={`${slot.float} ${slot.key === "center" ? "w-36" : "w-28"} ${slot.extra}`}
+            />
+          </Link>
+        );
+      })}
+    </Stage>
+  );
+}
 
 export function CardFan() {
   return (
-    <div
-      aria-hidden
-      className="relative mx-auto grid h-56 w-full max-w-sm place-items-center overflow-hidden"
-    >
-      {/* glow puck behind the fan */}
-      <div className="col-start-1 row-start-1 h-40 w-44 rounded-full bg-brand/25 blur-3xl" />
-
-      {FAN.map((c) => (
-        <div
-          key={c.key}
-          className={`col-start-1 row-start-1 ${c.z}`}
-          style={{ transform: c.transform }}
-        >
-          <CardImage
-            card={c.card}
-            priority={c.priority}
-            sizes={c.key === "center" ? "150px" : "112px"}
-            className={`${c.float} ${c.key === "center" ? "w-36" : "w-28"} ${c.extra}`}
-          />
-        </div>
-      ))}
-    </div>
+    <Suspense fallback={<Stage />}>
+      <Fan />
+    </Suspense>
   );
 }
