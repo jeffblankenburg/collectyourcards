@@ -17,12 +17,16 @@ const OPTS: { key: SortKey; label: string }[] = [
   { key: "ln", label: "Location" },
 ];
 
+// Sort keys that reference owner-private fields — never offered on a public view.
+const PUBLIC_SORT_KEYS = new Set<SortKey>(["cr", "n", "player", "se", "sn", "g"]);
+
 // Sort picker (the engine already exists in the pipeline — this is the missing
 // UI). Tap a field to sort by it; tap the active field again to reverse.
 export function SortControl() {
-  const { sort, dispatch } = useCollection();
+  const { sort, dispatch, publicMode } = useCollection();
   const [open, setOpen] = useState(false);
-  const cur = OPTS.find((o) => o.key === sort.key);
+  const opts = publicMode ? OPTS.filter((o) => PUBLIC_SORT_KEYS.has(o.key)) : OPTS;
+  const cur = opts.find((o) => o.key === sort.key);
   const DirIcon = sort.dir === "asc" ? ArrowUp : ArrowDown;
 
   return (
@@ -38,7 +42,7 @@ export function SortControl() {
         <>
           <button aria-label="Close sort menu" className="fixed inset-0 z-40 cursor-default" onClick={() => setOpen(false)} />
           <div className="absolute bottom-full right-0 z-50 mb-2 w-44 rounded-2xl border border-white/10 bg-base p-1 shadow-xl">
-            {OPTS.map((o) => {
+            {opts.map((o) => {
               const active = o.key === sort.key;
               const DI = sort.dir === "asc" ? ArrowUp : ArrowDown;
               return (

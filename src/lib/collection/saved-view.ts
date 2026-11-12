@@ -108,3 +108,10 @@ export async function rotateSavedViewToken(id: number): Promise<string> {
   if (error) throw error;
   return data as string;
 }
+
+// All photos for one card on a public shared view (authorized by the view token).
+export async function publicCardPhotos(token: string, userCardId: number): Promise<{ user_card_photo_id: number; photo_url: string; sort_order: number | null }[]> {
+  const { data, error } = await createClient().rpc("public_card_photos", { p_token: token, p_user_card_id: userCardId });
+  if (error) throw error;
+  return (data ?? []) as { user_card_photo_id: number; photo_url: string; sort_order: number | null }[];
+}

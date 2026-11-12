@@ -1,4 +1,5 @@
-import { MapPin } from "lucide-react";
+import Image from "next/image";
+import { MapPin, Star } from "lucide-react";
 import type { CompactPlayer, CompactRow } from "@/lib/collection/index-types";
 import { fullName } from "@/lib/collection/index-types";
 
@@ -102,6 +103,42 @@ export function PlayersWithTeams({ row, chipSize = 18, stacked = false }: { row:
 export function gradeLabel(row: CompactRow): string | null {
   if (row.g == null) return null;
   return `${row.ga ?? ""} ${row.g}`.trim();
+}
+
+// THE canonical owned-card row body (photo + number/grade/value/favorite +
+// players w/ team circles + series + flags/serial). Used by the collection list
+// view AND public views/profiles so a copy renders identically everywhere — the
+// caller supplies the clickable wrapper. `value` is a pre-formatted money string
+// (omit for public, where values are hidden); `locationLabel` adds a location
+// pill (owner-only). No hooks → safe in Server Components.
+export function CardRowInner({ row, value, locationLabel }: { row: CompactRow; value?: string | null; locationLabel?: string | null }) {
+  const grade = gradeLabel(row);
+  return (
+    <div className="flex w-full items-stretch gap-3 overflow-hidden rounded-xl border border-white/5 bg-white/[0.03] pl-3 text-left transition hover:border-white/15 hover:bg-white/[0.06]">
+      <div className="my-2 flex shrink-0 flex-col items-center gap-1 self-start">
+        <div className="relative aspect-[5/7] w-12 overflow-hidden border border-white/10 bg-white/5">
+          {row.pu ? <Image src={row.pu} alt={playersLabel(row)} fill sizes="48px" className="object-contain" /> : <div className="flex h-full items-center justify-center text-[9px] text-muted">#{row.n}</div>}
+        </div>
+        {row.rc ? <span className="rounded-full border border-white/15 bg-white/[0.06] px-1 py-0.5 font-mono text-[10px] leading-none tracking-wide text-ink">{row.rc}</span> : null}
+      </div>
+
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 py-2 pr-1">
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-mono text-sm font-semibold text-muted">#{row.n}</span>
+          <div className="flex shrink-0 items-center gap-2">
+            {grade ? <span className="rounded bg-gold/15 px-1.5 py-0.5 text-[10px] font-semibold text-gold">{grade}</span> : null}
+            {value != null ? <span className="text-sm font-semibold tabular-nums text-ink">{value}</span> : null}
+            {row.sp ? <Star className="size-4 fill-gold text-gold" /> : null}
+          </div>
+        </div>
+        <PlayersWithTeams row={row} stacked />
+        <div className="text-xs leading-snug text-muted">{row.se}</div>
+        <FlagBadges row={row} locationLabel={locationLabel} />
+      </div>
+
+      <span aria-hidden className="w-1 shrink-0" style={{ backgroundColor: row.cx || "transparent" }} />
+    </div>
+  );
 }
 
 // eBay SOLD/completed-listings search for a card (matches v1: card # + player

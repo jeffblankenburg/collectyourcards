@@ -4,7 +4,7 @@ import { memo, useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronUp, SlidersHorizontal } from "lucide-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useCollection } from "../collection-provider";
-import { COLUMNS, DEFAULT_VISIBLE, type ColDef } from "./table-columns";
+import { COLUMNS, DEFAULT_VISIBLE, PUBLIC_COLUMN_KEYS, type ColDef } from "./table-columns";
 import type { ValueMode } from "@/lib/collection/pipeline";
 import type { CompactRow } from "@/lib/collection/index-types";
 
@@ -53,12 +53,15 @@ function loadVisible(): Set<string> {
 }
 
 export function TableView() {
-  const { visibleRows, rows, sort, dispatch, valueMode } = useCollection();
+  const { visibleRows, rows, sort, dispatch, valueMode, publicMode } = useCollection();
   const parentRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState<Set<string>>(loadVisible);
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  const cols = useMemo(() => COLUMNS.filter((c) => visible.has(c.key)), [visible]);
+  // Public mode: only ever offer/show the public-safe columns (no price/value/
+  // location/notes/code), regardless of the viewer's saved column prefs.
+  const available = useMemo(() => publicMode ? COLUMNS.filter((c) => PUBLIC_COLUMN_KEYS.includes(c.key)) : COLUMNS, [publicMode]);
+  const cols = useMemo(() => available.filter((c) => visible.has(c.key)), [available, visible]);
   const widths = useColumnWidths(rows, cols);
   const totalWidth = cols.reduce((n, c) => n + (widths[c.key] ?? c.min), 0);
 
@@ -81,7 +84,7 @@ export function TableView() {
         </button>
         {pickerOpen ? (
           <div className="absolute right-0 top-9 z-30 grid max-h-80 w-56 grid-cols-2 gap-1 overflow-y-auto rounded-xl border border-white/10 bg-base/95 p-2 shadow-2xl backdrop-blur-xl">
-            {COLUMNS.filter((c) => c.label).map((c) => (
+            {available.filter((c) => c.label).map((c) => (
               <label key={c.key} className="flex items-center gap-2 rounded px-2 py-1.5 text-xs text-ink hover:bg-white/5">
                 <input type="checkbox" checked={visible.has(c.key)} onChange={() => toggleCol(c.key)} className="accent-[var(--color-brand)]" />
                 <span className="truncate">{c.label}</span>
@@ -106,7 +109,8 @@ export function TableView() {
               const row = visibleRows[vi.index];
               return (
                 <div key={row.i} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: vi.size, transform: `translateY(${vi.start}px)` }}>
-                  <TableRow row={row} cols={cols} widths={widths} valueMode={valueMode} onEdit={() => dispatch({ t: "viewing", id: row.i })} />
+                  <TableRow row={row} cols={cols} widths={widths} valueMode={valueMode}
+                    onEdit={() => dispatch({ t: "viewing", id: row.i })} />
                 </div>
               );
             })}

@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { ExternalLink, Pencil, X } from "lucide-react";
+import Link from "next/link";
+import { ExternalLink, Info, Pencil, X } from "lucide-react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { useCollection } from "./collection-provider";
 import { FlagBadges, PlayersWithTeams, ebaySoldUrl, gradeLabel, serialLabel } from "./card-row-shared";
 import { listPhotos, type PhotoRow } from "@/lib/collection/mutations";
+import { publicCardPhotos } from "@/lib/collection/saved-view";
 import { cardValue } from "@/lib/collection/pipeline";
 import { money } from "@/lib/collection/index-types";
 
@@ -14,7 +16,7 @@ import { money } from "@/lib/collection/index-types";
 // pinch / double-tap zooms the image in place (not the page). Metadata below,
 // Close + Edit in the top bar (edit is a deliberate button, not the default).
 export function CardDetailModal() {
-  const { viewingRow, dispatch, valueMode, editingId } = useCollection();
+  const { viewingRow, dispatch, valueMode, editingId, publicMode, shareToken } = useCollection();
   const row = viewingRow!;
   const [photos, setPhotos] = useState<PhotoRow[] | null>(null);
   const [active, setActive] = useState(0);
@@ -23,10 +25,15 @@ export function CardDetailModal() {
 
   const loadPhotos = useCallback((blank: boolean) => {
     if (blank) setPhotos(null);
-    listPhotos(row.i)
+    // Public viewers fetch the card's photos via the view token (user_card_photo
+    // is RLS-protected); owners read them directly.
+    const fetcher = publicMode
+      ? (shareToken ? publicCardPhotos(shareToken, row.i) : Promise.resolve([]))
+      : listPhotos(row.i);
+    fetcher
       .then((ps) => setPhotos([...ps].sort((a, b) => (a.sort_order ?? 99) - (b.sort_order ?? 99))))
       .catch(() => setPhotos([]));
-  }, [row.i]);
+  }, [row.i, publicMode, shareToken]);
 
   useEffect(() => { setActive(0); setZoomed(false); loadPhotos(true); }, [loadPhotos]);
 
@@ -55,7 +62,11 @@ export function CardDetailModal() {
       {/* top bar */}
       <div className="flex shrink-0 items-center justify-between p-3 [padding-top:calc(0.75rem+env(safe-area-inset-top))]">
         <button onClick={close} aria-label="Close" className="flex size-10 items-center justify-center rounded-full bg-white/10 text-ink transition hover:bg-white/15"><X className="size-5" /></button>
-        <button onClick={edit} className="flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-ink transition hover:bg-white/15"><Pencil className="size-4" /> Edit</button>
+        {publicMode ? (
+          <Link href={`/cards/${row.c}`} className="flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-ink transition hover:bg-white/15"><Info className="size-4" /> Card details</Link>
+        ) : (
+          <button onClick={edit} className="flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-ink transition hover:bg-white/15"><Pencil className="size-4" /> Edit</button>
+        )}
       </div>
 
       {/* photos — swipe between; pinch / double-tap to zoom */}
@@ -91,26 +102,29 @@ export function CardDetailModal() {
       <div className="flex-[2] overflow-y-auto border-t border-white/10 p-4 [padding-bottom:calc(1rem+env(safe-area-inset-bottom))]">
         <div className="flex items-start justify-between gap-3">
           <span className="font-mono text-sm font-semibold text-muted">#{row.n}</span>
-          {value != null ? <span className="text-base font-semibold tabular-nums text-ink">{money(value)}</span> : null}
+          {!publicMode && value != null ? <span className="text-base font-semibold tabular-nums text-ink">{money(value)}</span> : null}
         </div>
         <div className="mt-1"><PlayersWithTeams row={row} stacked chipSize={18} /></div>
         <div className="mt-1 text-sm text-muted">{row.se}</div>
-        <div className="mt-3"><FlagBadges row={row} locationLabel={row.ln} /></div>
+        <div className="mt-3"><FlagBadges row={row} locationLabel={publicMode ? null : row.ln} /></div>
 
         <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
           {serial ? <Meta k="Serial" v={serial} /> : null}
           {grade ? <Meta k="Grade" v={grade} /> : null}
-          {row.pp ? <Meta k="Paid" v={money(row.pp)} /> : null}
-          {cardValue(row, "estimated") != null ? <Meta k="Est. value" v={money(cardValue(row, "estimated")!)} /> : null}
-          {row.ln ? <Meta k="Location" v={row.ln} /> : null}
-          {row.rc ? <Meta k="Code" v={row.rc} /> : null}
+          {/* owner-only financial / physical fields */}
+          {!publicMode && row.pp ? <Meta k="Paid" v={money(row.pp)} /> : null}
+          {!publicMode && cardValue(row, "estimated") != null ? <Meta k="Est. value" v={money(cardValue(row, "estimated")!)} /> : null}
+          {!publicMode && row.ln ? <Meta k="Location" v={row.ln} /> : null}
+          {!publicMode && row.rc ? <Meta k="Code" v={row.rc} /> : null}
         </dl>
-        {row.nt ? <div className="mt-4"><div className="text-xs text-muted">Notes</div><p className="mt-0.5 text-sm text-ink">{row.nt}</p></div> : null}
+        {!publicMode && row.nt ? <div className="mt-4"><div className="text-xs text-muted">Notes</div><p className="mt-0.5 text-sm text-ink">{row.nt}</p></div> : null}
 
-        <a href={ebaySoldUrl(row)} target="_blank" rel="noopener noreferrer"
-          className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-sm text-ink transition hover:bg-white/5">
-          <ExternalLink className="size-4 text-muted" /> eBay sold listings
-        </a>
+        {!publicMode ? (
+          <a href={ebaySoldUrl(row)} target="_blank" rel="noopener noreferrer"
+            className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-sm text-ink transition hover:bg-white/5">
+            <ExternalLink className="size-4 text-muted" /> eBay sold listings
+          </a>
+        ) : null}
       </div>
     </div>
   );

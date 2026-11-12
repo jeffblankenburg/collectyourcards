@@ -86,3 +86,7 @@ export const COLUMNS: ColDef[] = [
 ];
 
 export const DEFAULT_VISIBLE = COLUMNS.filter((c) => c.defaultVisible).map((c) => c.key);
+
+// Columns that are safe to show on a PUBLIC shared view / profile — identity +
+// condition only. Excludes paid/estimated/value, location, notes, and code.
+export const PUBLIC_COLUMN_KEYS = ["thumb", "num", "players", "series", "color", "serial", "auto", "relic", "sp", "grade", "added"];

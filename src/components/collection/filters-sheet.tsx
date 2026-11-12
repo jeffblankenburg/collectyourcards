@@ -14,10 +14,15 @@ const FLAGS = [
   { key: "photo", label: "Photo" },
 ] as const;
 
+// On a public shared view these describe the owner's own copy state, not the
+// catalog card — hide them (keep only card attributes + condition).
+const PUBLIC_FLAG_KEYS = new Set(["rookie", "auto", "relic", "graded"]);
+
 // Bottom-sheet with the heavy filters (teams / set / locations / flags), so the
 // collection screen stays uncluttered. Applied live; "Clear all" resets.
 export function FiltersSheet({ onClose }: { onClose: () => void }) {
-  const { teams, sets, locations, filters, dispatch } = useCollection();
+  const { teams, sets, locations, filters, dispatch, publicMode } = useCollection();
+  const flags = publicMode ? FLAGS.filter((f) => PUBLIC_FLAG_KEYS.has(f.key)) : FLAGS;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 sm:items-center sm:p-4" onClick={onClose}>
@@ -64,8 +69,8 @@ export function FiltersSheet({ onClose }: { onClose: () => void }) {
             </select>
           </Section>
 
-          {/* Locations */}
-          {locations.length > 0 ? (
+          {/* Locations — owner only (a viewer shouldn't see where cards live) */}
+          {!publicMode && locations.length > 0 ? (
             <Section label="Location">
               <div className="flex flex-wrap gap-2">
                 <Chip label="Unassigned" active={filters.locationIds.has(UNASSIGNED)} onClick={() => dispatch({ t: "toggleLocation", id: UNASSIGNED })} />
@@ -80,7 +85,7 @@ export function FiltersSheet({ onClose }: { onClose: () => void }) {
           {/* Flags */}
           <Section label="Attributes">
             <div className="flex flex-wrap gap-2">
-              {FLAGS.map((f) => (
+              {flags.map((f) => (
                 <Chip key={f.key} label={f.label} active={filters[f.key]} onClick={() => dispatch({ t: "toggleAttr", key: f.key })} />
               ))}
             </div>

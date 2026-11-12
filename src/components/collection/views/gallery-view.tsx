@@ -13,7 +13,7 @@ const MIN_TILE = 150;
 const GAP = 8;
 
 export function GalleryView() {
-  const { visibleRows, dispatch, search, valueMode } = useCollection();
+  const { visibleRows, dispatch, search, valueMode, publicMode } = useCollection();
   const parentRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
 
@@ -56,7 +56,8 @@ export function GalleryView() {
             <div key={vi.key} data-index={vi.index} ref={v.measureElement}
               style={{ position: "absolute", top: 0, left: 0, width: "100%", transform: `translateY(${vi.start}px)`, paddingBottom: GAP }}>
               <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))`, gap: GAP, alignItems: "start" }}>
-                {items.map((row) => <Tile key={row.i} row={row} valueMode={valueMode} onEdit={() => dispatch({ t: "viewing", id: row.i })} />)}
+                {items.map((row) => <Tile key={row.i} row={row} valueMode={valueMode} publicMode={publicMode}
+                  onEdit={() => dispatch({ t: "viewing", id: row.i })} />)}
               </div>
             </div>
           );
@@ -66,9 +67,9 @@ export function GalleryView() {
   );
 }
 
-const Tile = memo(function Tile({ row, valueMode, onEdit }: { row: CompactRow; valueMode: ValueMode; onEdit: () => void }) {
+const Tile = memo(function Tile({ row, valueMode, publicMode, onEdit }: { row: CompactRow; valueMode: ValueMode; publicMode: boolean; onEdit: () => void }) {
   const grade = gradeLabel(row);
-  const val = cardValue(row, valueMode);
+  const val = publicMode ? null : cardValue(row, valueMode);
   return (
     <button onClick={onEdit} className="flex flex-col overflow-hidden rounded-lg border border-white/5 bg-white/[0.03] text-left transition hover:border-white/15">
       <div className="relative aspect-[5/7] w-full overflow-hidden bg-white/5">
@@ -89,7 +90,7 @@ const Tile = memo(function Tile({ row, valueMode, onEdit }: { row: CompactRow; v
         {/* full series name — no truncation */}
         <div className="text-[11px] leading-snug text-muted">{row.se}</div>
         {/* flags + serial + location pill */}
-        <FlagBadges row={row} locationLabel={row.ln} />
+        <FlagBadges row={row} locationLabel={publicMode ? null : row.ln} />
       </div>
       {/* color/parallel stripe — bottom edge of the card */}
       {row.cx ? <span aria-hidden className="mt-auto h-1.5 w-full shrink-0" style={{ backgroundColor: row.cx }} /> : null}

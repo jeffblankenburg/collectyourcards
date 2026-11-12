@@ -21,7 +21,7 @@ export default async function SeriesDetailPage({ params }: { params: Promise<{ s
         {series.print_run_display ? ` · ${series.print_run_display}` : ""}
       </p>
 
-      <SeriesCards seriesId={series.series_id} initialCards={cards} />
+      <SeriesCards seriesId={series.series_id} initialCards={cards} totalCount={series.card_count} seriesName={series.name} />
     </main>
   );
 }

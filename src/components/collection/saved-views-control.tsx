@@ -1,12 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bookmark, Check, Link2, RefreshCw, Trash2, X } from "lucide-react";
+import { Bookmark, Check, Link2, RefreshCw, Save, Trash2, X } from "lucide-react";
 import { useCollection } from "./collection-provider";
 import {
   deleteSavedView, fromConfig, mySavedViews, rotateSavedViewToken, toConfig, upsertSavedView,
-  type SavedViewRow,
+  type SavedViewConfig, type SavedViewRow,
 } from "@/lib/collection/saved-view";
+
+const SORT_LABELS: Record<string, string> = {
+  cr: "Date added", n: "Card #", player: "Player", se: "Series", sn: "Serial #",
+  cl: "Color", g: "Grade", pc: "Photos", cv: "Value", ev: "Est. value", pp: "Paid", ln: "Location",
+};
+
+// One-line human summary of a view's config, so the row shows what it captured
+// (and visibly changes after "Update").
+function summarize(config: SavedViewConfig): string {
+  const parts: string[] = [];
+  if (config.sort?.key) parts.push(`${SORT_LABELS[config.sort.key] ?? config.sort.key} ${config.sort.dir === "asc" ? "↑" : "↓"}`);
+  const f = config.filters;
+  const nFilters = (f?.teamIds?.length ?? 0) + (f?.setId != null ? 1 : 0) + (f?.locationIds?.length ?? 0) +
+    ["rookie", "auto", "relic", "graded", "forSale", "special", "photo"].filter((k) => (f as Record<string, unknown>)?.[k]).length;
+  if (nFilters > 0) parts.push(`${nFilters} filter${nFilters === 1 ? "" : "s"}`);
+  if (config.search?.trim()) parts.push(`“${config.search.trim()}”`);
+  return parts.join(" · ") || "No filters";
+}
 
 // "Views" button + sheet: save the current filter/sort/search state as a named
 // view, re-apply any saved view in one tap, and share public ones via /v/<token>.
@@ -29,6 +47,7 @@ function SavedViewsSheet({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState<number | null>(null);
+  const [updated, setUpdated] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = async () => {
@@ -56,6 +75,20 @@ function SavedViewsSheet({ onClose }: { onClose: () => void }) {
     try {
       await upsertSavedView({ id: v.saved_view_id, name: v.name, config: v.config, isPublic: !v.is_public, slug: v.slug });
       await refresh();
+    } catch (e) { setError((e as Error).message); }
+  };
+
+  // Overwrite an existing view with the CURRENT filters/sort/search/layout
+  // (so you can re-sort, then push it into the view the link already points at).
+  const updateToCurrent = async (v: SavedViewRow) => {
+    setError(null);
+    try {
+      await upsertSavedView({
+        id: v.saved_view_id, name: v.name, isPublic: v.is_public, slug: v.slug,
+        config: toConfig({ filters, sort, search, view, valueMode }),
+      });
+      await refresh();
+      setUpdated(v.saved_view_id); setTimeout(() => setUpdated(null), 1800);
     } catch (e) { setError((e as Error).message); }
   };
 
@@ -116,12 +149,17 @@ function SavedViewsSheet({ onClose }: { onClose: () => void }) {
                     <div className="flex items-center justify-between gap-2">
                       <button onClick={() => apply(v)} className="min-w-0 flex-1 text-left">
                         <div className="truncate text-sm font-medium text-ink">{v.name}</div>
-                        <div className="text-[11px] text-muted">Tap to apply</div>
+                        <div className="truncate text-[11px] text-muted">{summarize(v.config)}</div>
                       </button>
                       <button onClick={() => remove(v)} className="shrink-0 rounded-lg p-2 text-muted hover:text-gold" title="Delete"><Trash2 className="size-4" /></button>
                     </div>
 
                     <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-white/5 pt-2">
+                      <button onClick={() => updateToCurrent(v)} title="Overwrite this view with the current filters, sort and layout"
+                        className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition ${updated === v.saved_view_id ? "border-brand/60 bg-brand/15 text-ink" : "border-white/10 text-muted hover:text-ink"}`}>
+                        {updated === v.saved_view_id ? <Check className="size-3" /> : <Save className="size-3" />}
+                        {updated === v.saved_view_id ? "Updated" : "Update"}
+                      </button>
                       <button onClick={() => togglePublic(v)}
                         className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition ${v.is_public ? "border-brand/60 bg-brand/15 text-ink" : "border-white/10 text-muted hover:text-ink"}`}>
                         {v.is_public ? <Check className="size-3" /> : null} {v.is_public ? "Public" : "Make public"}

@@ -90,6 +90,8 @@ function reducer(s: State, a: Action): State {
 
 interface CollectionCtx extends State {
   collectorId: number;
+  publicMode: boolean;   // read-only shared view: no fetch/cache/edit, values hidden
+  shareToken: string | null;  // public mode: authorizes the public photo fetch
   visibleRows: CompactRow[];
   stats: ReturnType<typeof computeStats>;
   teams: ReturnType<typeof teamFacets>;
@@ -106,8 +108,20 @@ interface CollectionCtx extends State {
 
 const Ctx = createContext<CollectionCtx | null>(null);
 
-export function CollectionProvider({ collectorId, children }: { collectorId: number; children: ReactNode }) {
+export function CollectionProvider({
+  collectorId, children, initialRows, publicMode = false, initialView, initialSort, shareToken = null,
+}: {
+  collectorId: number;
+  children: ReactNode;
+  initialRows?: CompactRow[];     // public mode: seed rows instead of fetching
+  publicMode?: boolean;
+  initialView?: ViewMode;
+  initialSort?: SortState;        // public mode: seed the saved view's sort
+  shareToken?: string | null;     // public mode: token authorizing the photo fetch
+}) {
   const [state, dispatch] = useReducer(reducer, INITIAL, (init) => {
+    // Public mode: start ready with the supplied rows; never touch the owner cache.
+    if (initialRows) return { ...init, rows: initialRows, status: "ready" as const, view: initialView ?? init.view, sort: initialSort ?? init.sort };
     const cached = getCachedRows(collectorId);
     return cached ? { ...init, rows: cached, status: "ready" as const } : init;
   });
@@ -131,12 +145,13 @@ export function CollectionProvider({ collectorId, children }: { collectorId: num
     }
   }, [collectorId]);
 
-  useEffect(() => { void load(false); }, [load]);
+  useEffect(() => { if (!publicMode) void load(false); }, [load, publicMode]);
 
   // Auto-refresh when the app regains focus (e.g. you edited on another device,
   // then switched back here). Debounced by staleness so rapid tab-switches don't
-  // refetch the ~750KB index repeatedly.
+  // refetch the ~750KB index repeatedly. (Owner only — public rows are static.)
   useEffect(() => {
+    if (publicMode) return;
     const maybeRefresh = () => {
       if (document.visibilityState === "visible" && Date.now() - lastLoadRef.current > 15_000) void load(true);
     };
@@ -146,10 +161,11 @@ export function CollectionProvider({ collectorId, children }: { collectorId: num
       document.removeEventListener("visibilitychange", maybeRefresh);
       window.removeEventListener("focus", maybeRefresh);
     };
-  }, [load]);
+  }, [load, publicMode]);
 
-  // Keep the session singleton in sync after optimistic edits.
-  useEffect(() => { if (state.status === "ready") syncCachedRows(collectorId, state.rows); }, [state.rows, state.status, collectorId]);
+  // Keep the session singleton in sync after optimistic edits. Never in public
+  // mode — the viewer isn't the owner, and the key would clobber their own cache.
+  useEffect(() => { if (!publicMode && state.status === "ready") syncCachedRows(collectorId, state.rows); }, [state.rows, state.status, collectorId, publicMode]);
 
   // Deep link: /collection?view=<userCardId> opens that card's full-screen
   // viewer once the index includes it (e.g. arriving from a catalog card page's
@@ -159,7 +175,7 @@ export function CollectionProvider({ collectorId, children }: { collectorId: num
   const searchParams = useSearchParams();
   const handledViewRef = useRef<string | null>(null);
   useEffect(() => {
-    if (state.status !== "ready") return;
+    if (publicMode || state.status !== "ready") return;
     const view = searchParams.get("view");
     if (!view || handledViewRef.current === view) return;
     const id = Number(view);
@@ -167,7 +183,7 @@ export function CollectionProvider({ collectorId, children }: { collectorId: num
       handledViewRef.current = view;
       dispatch({ t: "viewing", id });
     }
-  }, [state.status, state.rows, searchParams]);
+  }, [state.status, state.rows, searchParams, publicMode]);
 
   const deferredSearch = useDeferredValue(state.search);
   const visibleRows = useMemo(
@@ -187,11 +203,11 @@ export function CollectionProvider({ collectorId, children }: { collectorId: num
   );
 
   const value: CollectionCtx = {
-    ...state, collectorId, visibleRows, stats, teams, sets, viewingRow, editingRow, dispatch,
+    ...state, collectorId, publicMode, shareToken, visibleRows, stats, teams, sets, viewingRow, editingRow, dispatch,
     patchRow: useCallback((id, patch) => dispatch({ t: "patchRow", id, patch }), []),
     removeRow: useCallback((id) => dispatch({ t: "removeRow", id }), []),
     setLocations: useCallback((locations) => dispatch({ t: "locations", locations }), []),
-    reload: useCallback(() => load(true), [load]),
+    reload: useCallback(async () => { if (!publicMode) await load(true); }, [load, publicMode]),
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

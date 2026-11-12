@@ -1,16 +1,14 @@
 "use client";
 
 import { memo, useEffect, useRef } from "react";
-import Image from "next/image";
-import { Star } from "lucide-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useCollection } from "../collection-provider";
-import { FlagBadges, PlayersWithTeams, gradeLabel, playersLabel } from "../card-row-shared";
+import { CardRowInner } from "../card-row-shared";
 import { cardValue, type ValueMode } from "@/lib/collection/pipeline";
 import { money, type CompactRow } from "@/lib/collection/index-types";
 
 export function ListView() {
-  const { visibleRows, dispatch, search, valueMode } = useCollection();
+  const { visibleRows, dispatch, search, valueMode, publicMode } = useCollection();
   const parentRef = useRef<HTMLDivElement>(null);
   // A new search reorders the whole list — jump back to the top so results read
   // from the start (and the virtualizer lays out from a clean scroll position).
@@ -37,7 +35,8 @@ export function ListView() {
             <div key={row.i} data-index={vi.index} ref={v.measureElement}
               style={{ position: "absolute", top: 0, left: 0, width: "100%", transform: `translateY(${vi.start}px)` }}
               className="px-0.5 py-1">
-              <ListRow row={row} valueMode={valueMode} onEdit={() => dispatch({ t: "viewing", id: row.i })} />
+              <ListRow row={row} valueMode={valueMode} publicMode={publicMode}
+                onEdit={() => dispatch({ t: "viewing", id: row.i })} />
             </div>
           );
         })}
@@ -46,38 +45,11 @@ export function ListView() {
   );
 }
 
-const ListRow = memo(function ListRow({ row, valueMode, onEdit }: { row: CompactRow; valueMode: ValueMode; onEdit: () => void }) {
-  const grade = gradeLabel(row);
-  const val = cardValue(row, valueMode);
+const ListRow = memo(function ListRow({ row, valueMode, publicMode, onEdit }: { row: CompactRow; valueMode: ValueMode; publicMode: boolean; onEdit: () => void }) {
+  const val = publicMode ? null : cardValue(row, valueMode);
   return (
-    <button onClick={onEdit} className="flex w-full items-stretch gap-3 overflow-hidden rounded-xl border border-white/5 bg-white/[0.03] pl-3 text-left transition hover:border-white/15 hover:bg-white/[0.06]">
-      <div className="my-2 flex shrink-0 flex-col items-center gap-1 self-start">
-        <div className="relative aspect-[5/7] w-12 overflow-hidden border border-white/10 bg-white/5">
-          {row.pu ? <Image src={row.pu} alt={playersLabel(row)} fill sizes="48px" className="object-contain" /> : <div className="flex h-full items-center justify-center text-[9px] text-muted">#{row.n}</div>}
-        </div>
-        {row.rc ? <span className="rounded-full border border-white/15 bg-white/[0.06] px-1 py-0.5 font-mono text-[10px] leading-none tracking-wide text-ink">{row.rc}</span> : null}
-      </div>
-
-      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 py-2 pr-1">
-        {/* card number (left) + grade/value/favorite (right) — one line, so the
-            value never steals width from the series name below */}
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-mono text-sm font-semibold text-muted">#{row.n}</span>
-          <div className="flex shrink-0 items-center gap-2">
-            {grade ? <span className="rounded bg-gold/15 px-1.5 py-0.5 text-[10px] font-semibold text-gold">{grade}</span> : null}
-            {val != null ? <span className="text-sm font-semibold tabular-nums text-ink">{money(val)}</span> : null}
-            {row.sp ? <Star className="size-4 fill-gold text-gold" /> : null}
-          </div>
-        </div>
-        <PlayersWithTeams row={row} stacked />
-        {/* full series name — no truncation, full width */}
-        <div className="text-xs leading-snug text-muted">{row.se}</div>
-        {/* flags + serial + location pill */}
-        <FlagBadges row={row} locationLabel={row.ln} />
-      </div>
-
-      {/* color/parallel stripe — right edge */}
-      <span aria-hidden className="w-1 shrink-0" style={{ backgroundColor: row.cx || "transparent" }} />
+    <button onClick={onEdit} className="block w-full">
+      <CardRowInner row={row} value={val != null ? money(val) : null} locationLabel={publicMode ? null : row.ln} />
     </button>
   );
 });

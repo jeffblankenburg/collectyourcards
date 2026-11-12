@@ -87,6 +87,13 @@ export function runPipeline(rows: CompactRow[], filters: Filters, search: string
     const av = cmpVal(a, sort.key), bv = cmpVal(b, sort.key);
     if (av < bv) return -1 * dir;
     if (av > bv) return 1 * dir;
+    // Secondary sort: natural card-number order within the primary group (e.g.
+    // within a series #1, #2, #10) — always ascending, independent of `dir`.
+    // Skip when card number IS the primary key (nothing left to break).
+    if (sort.key !== "n") {
+      const c = (a.n ?? "").localeCompare(b.n ?? "", undefined, { numeric: true, sensitivity: "base" });
+      if (c !== 0) return c;
+    }
     return a.i - b.i;
   });
   return filtered;

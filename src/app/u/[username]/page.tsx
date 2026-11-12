@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Bookmark } from "lucide-react";
-import { getPublicProfile } from "@/lib/public-view";
-import { CardTile } from "@/components/catalog/card-tile";
+import { getPublicProfile, publicCardToRow } from "@/lib/public-view";
+import { CardRowInner } from "@/components/collection/card-row-shared";
 
 export const instant = false; // per-user public data; owner-preview differs from anon
 
@@ -57,7 +57,11 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           <p className="text-sm text-muted">No favorites featured yet.</p>
         ) : (
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {profile.favorites.map((c) => <CardTile key={c.user_card_id} card={c} condition={c} />)}
+            {profile.favorites.map((c) => (
+              <Link key={c.user_card_id} href={`/cards/${c.card_id}`} className="block">
+                <CardRowInner row={publicCardToRow(c)} />
+              </Link>
+            ))}
           </div>
         )}
       </section>

@@ -25,6 +25,46 @@ export async function updateUserCard(id: number, patch: UserCardPatch) {
   if (error) throw error;
 }
 
+// Short per-card human label (matches the server addCard action + legacy format):
+// 4 mixed-case alphanumerics. Not unique — a tag, not a key.
+function randomCode(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let s = "";
+  for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
+
+// Bulk-add: one new user_card per card_id (a copy even if already owned — matches
+// v1), all filed to the same location/notes. Writes under owner-only RLS; chunked
+// so a big checklist (hundreds of cards) stays within a sane statement size.
+export async function bulkAddCards(
+  collectorId: number, cardIds: number[], locationId: number | null, notes: string | null,
+): Promise<number> {
+  const supabase = createClient();
+  const now = new Date().toISOString();
+  let added = 0;
+  for (let i = 0; i < cardIds.length; i += 300) {
+    const rows = cardIds.slice(i, i + 300).map((card_id) => ({
+      user_id: collectorId, card_id, user_location_id: locationId,
+      notes: notes || null, random_code: randomCode(), created: now,
+    }));
+    const { error, count } = await supabase.from("user_card").insert(rows, { count: "exact" });
+    if (error) throw error;
+    added += count ?? rows.length;
+  }
+  return added;
+}
+
+// card_id -> owned copy count for the signed-in user within a series (RLS-scoped).
+export async function seriesOwnedCounts(seriesId: number): Promise<Map<number, number>> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("series_owned_counts", { p_series_id: seriesId });
+  if (error) throw error;
+  const m = new Map<number, number>();
+  for (const r of (data ?? []) as { card_id: number; cnt: number }[]) m.set(Number(r.card_id), Number(r.cnt));
+  return m;
+}
+
 export async function deleteUserCard(id: number) {
   const supabase = createClient();
   await supabase.from("user_card_photo").delete().eq("user_card_id", id); // rows; objects removed by caller

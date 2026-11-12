@@ -33,6 +33,31 @@ $$;
 revoke all on function public.public_user_card_json(bigint) from public;
 
 -- ---------------------------------------------------------------------------
+-- All photos for one card on a shared view (the full-screen viewer's carousel).
+-- Authorized by the view's share token: the view must be public (or the caller
+-- is the owner) and the card must belong to that view's owner. Photo URLs live in
+-- a public storage bucket; this just lists them for a card the viewer can already
+-- see. Returns [] if unauthorized.
+-- ---------------------------------------------------------------------------
+create or replace function public.public_card_photos(p_token text, p_user_card_id bigint)
+returns jsonb
+language sql stable security definer set search_path = public as $$
+  select coalesce((
+    select jsonb_agg(jsonb_build_object(
+             'user_card_photo_id', ph.user_card_photo_id,
+             'photo_url', ph.photo_url,
+             'sort_order', ph.sort_order)
+           order by ph.sort_order nulls last, ph.user_card_photo_id)
+    from public.saved_view sv
+    join public.user_card uc on uc.user_id = sv.user_id and uc.user_card_id = p_user_card_id and uc.sold_at is null
+    join public.user_card_photo ph on ph.user_card_id = uc.user_card_id
+    where sv.share_token = p_token
+      and (coalesce(sv.is_public, false) or sv.user_id = public.current_collector_id())
+  ), '[]'::jsonb);
+$$;
+grant execute on function public.public_card_photos(text, bigint) to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
 -- Live cards for a shared view. Returns null if the token is unknown, or the
 -- view is private and the caller isn't the owner (owner-preview allowed). Public
 -- visitors get the public-safe slice, filters applied, and private sort keys
@@ -159,7 +184,7 @@ begin
  || '  ) '
  || '  select jsonb_build_object( '
  || '    ''cards'', coalesce((select jsonb_agg(public.public_user_card_json(t.user_card_id) order by t.rn) '
- || '       from (select user_card_id, row_number() over (order by ' || v_order || ' ' || v_dir || ', user_card_id) rn '
+ || '       from (select user_card_id, row_number() over (order by ' || v_order || ' ' || v_dir || ', num_sort asc, user_card_id) rn '
  || '             from base order by rn limit ' || v_cap::text || ') t), ''[]''::jsonb), '
  || '    ''truncated'', (select count(*) from base) > ' || v_cap::text || ' '
  || '  )';
@@ -171,18 +196,23 @@ begin
           coalesce((f->>'special')::boolean,false), coalesce((f->>'photo')::boolean,false),
           v_loc_nonzero, v_has_unassigned, v_tokens, v_is_owner;
 
-  -- Owner handle for the "by <user>" link (null if the owner has no public handle).
-  select username, display_name into v_owner_profile
+  -- Owner handle + a PHONE-SAFE display label (never expose the phone number).
+  select username,
+         public.safe_display_name(first_name, last_name, display_name, phone) as safe_name
+    into v_owner_profile
     from public.profiles where collector_id = v.user_id;
 
   return jsonb_build_object(
     'view', jsonb_build_object(
       'name', v.name,
       'view_mode', coalesce(cfg->>'view','list'),
+      -- the EFFECTIVE sort (after private-key downgrade) so the interactive
+      -- client seeds the same ordering the server returned.
+      'sort', jsonb_build_object('key', v_key, 'dir', v_dir),
       'is_owner', v_is_owner,
       'is_public', coalesce(v.is_public, false),
       'owner_username', v_owner_profile.username,
-      'owner_display', v_owner_profile.display_name
+      'owner_display', v_owner_profile.safe_name
     ),
     'cards', v_cards->'cards',
     'truncated', v_cards->'truncated'

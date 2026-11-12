@@ -2,6 +2,8 @@ import "server-only";
 import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { Card } from "@/lib/catalog/types";
+import type { CompactRow } from "@/lib/collection/index-types";
+import type { SortState } from "@/lib/collection/pipeline";
 
 // A card as returned by the public (share-view / profile) RPCs: the card_json
 // shape plus the owner's public-safe condition fields. No prices/values/location.
@@ -11,11 +13,36 @@ export interface PublicCard extends Card {
   grade: number | null;
   grading_agency: string | null;
   is_favorite: boolean | null;
+  primary_photo_url: string | null;
+}
+
+// Adapt a public card slice to the CompactRow the shared card-row components
+// render from — so a shared/public card looks identical to the collection. The
+// private fields (price/value/location/notes/random_code) are intentionally
+// null/false: the slice never carries them.
+export function publicCardToRow(c: PublicCard): CompactRow {
+  return {
+    i: c.user_card_id, c: c.card_id, n: c.card_number,
+    sn: c.serial_number, pr: c.print_run, g: c.grade, ga: c.grading_agency, gid: null,
+    pp: null, ev: null, cv: null, li: null, ln: null,
+    sp: !!c.is_favorite, fs: false, wd: false, af: false, rc: null, nt: null,
+    rk: c.is_rookie, au: c.is_autograph, rl: c.is_relic, sh: c.is_short_print,
+    cl: c.color?.name ?? null, cx: c.color?.hex ?? null,
+    se: c.series?.name ?? null, sid: c.series?.series_id ?? 0, sg: c.series?.slug ?? "",
+    st: c.set?.name ?? null, stid: c.set?.set_id ?? 0, yr: c.set?.year ?? null,
+    cr: 0, pc: c.primary_photo_url ? 1 : 0, pu: c.primary_photo_url ?? null,
+    pl: c.players.map((p) => ({
+      p: p.player_id, f: p.first_name, l: p.last_name,
+      t: p.team?.team_id ?? 0, ta: p.team?.abbreviation ?? null,
+      tp: p.team?.primary_color ?? null, ts: p.team?.secondary_color ?? null,
+    })),
+  };
 }
 
 export interface PublicView {
   name: string;
   view_mode: "list" | "gallery" | "table";
+  sort: SortState;
   is_owner: boolean;
   is_public: boolean;
   owner_username: string | null;

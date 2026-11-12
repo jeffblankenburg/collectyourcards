@@ -17,17 +17,20 @@ const LABEL: Record<ViewMode, string> = { list: "Card", gallery: "Gallery", tabl
 // Single button that cycles list → gallery → table. Shows the CURRENT view's
 // icon; tap to advance. Persists the choice (shared key with the old switch).
 export function ViewToggle() {
-  const { view, dispatch } = useCollection();
+  const { view, dispatch, publicMode } = useCollection();
 
+  // Public mode respects the shared view's layout — don't let the viewer's own
+  // saved collection preference override it (and don't pollute that key).
   useEffect(() => {
+    if (publicMode) return;
     const v = localStorage.getItem(LS_KEY);
     if (v === "list" || v === "gallery" || v === "table") dispatch({ t: "view", view: v });
-  }, [dispatch]);
+  }, [dispatch, publicMode]);
 
   function next() {
     const nv = ORDER[(ORDER.indexOf(view) + 1) % ORDER.length];
     dispatch({ t: "view", view: nv });
-    try { localStorage.setItem(LS_KEY, nv); } catch { /* ignore */ }
+    if (!publicMode) { try { localStorage.setItem(LS_KEY, nv); } catch { /* ignore */ } }
   }
 
   return (
